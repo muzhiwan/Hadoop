@@ -1,17 +1,16 @@
 package com.muzhiwan.hadoop;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Utility {
 
-	public static String packWord(String word) throws UnsupportedEncodingException {
+	public static String packWord(String word){
 		String retStr = null;
 		try {
 			retStr = URLDecoder.decode(word, "UTF-8").replace('\r', ' ').replace('\n', ' ').replace('\t', ' ');
-		} catch (IllegalArgumentException e) {
+		} catch (Exception e) {
 			retStr = word;
 			System.err.println(word);
 		}
@@ -46,12 +45,19 @@ public class Utility {
 		
 		return data[index];
 	}
+	
+	public static long getValidTime(long clientTime, long serverTime) {
+		if (serverTime > clientTime+10*24*60*60*1000 || serverTime < clientTime) {
+			return serverTime;
+		}else {
+			return clientTime;
+		}
+	}
 
 	public static long getValidTime(String clientTime, String serverTime) {
 		long lClientTime = 0L;
 		long lServerTime = 0L;
 		long validTime = 0L;
-		long minValidTime = 1332088922000L;
 		
 		try {
 			lClientTime = Long.parseLong(clientTime);
@@ -60,13 +66,9 @@ public class Utility {
 			System.err.println(String.format("Client Time: %s; Server Time: %s.", clientTime, serverTime));
 		}
 		
-		if (lServerTime > 0 && lServerTime < lClientTime) {
+		if (lServerTime > lClientTime+10*24*60*60*1000 && lServerTime < lClientTime) {
 			validTime = lServerTime;
-			// System.err.println(String.format("Use server time. Client Time: %s; Server Time: %s.", clientTime, serverTime));
-		} else if (lClientTime < minValidTime) {
-			validTime = minValidTime;
-			System.err.println(String.format("Use standard time. Client Time: %s; Server Time: %s.", clientTime, serverTime));
-		} else {
+		}else {
 			validTime = lClientTime;
 		}
 		

@@ -7,14 +7,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import com.muzhiwan.hadoop.MobileSDKUserInfoMR.MobileSDKUserInfoMapper;
+import com.muzhiwan.hadoop.MobileSDKUserInfoMR.MobileSDKUserInfoReducer;
+
 /*
- *  点击下载 200001;
+ *  
+ 点击下载 200001;
  下载错误 200002;
  下载完成 200003;
  下载取消 200004;
@@ -29,10 +32,12 @@ public class JobRunner {
 	private static final String TYPE_MOBILE_GAME_DOWNLOAD = "MobileGameDownload";
 	private static final String TYPE_MOBILE_SDK_ACTIVE_USER = "MobileSDKActiveUser";
 	private static final String TYPE_MOBILE_SDK_ANALYSIS = "MobileSDKAnalysis";
+	private static final String TYPE_MOBILE_SDK_USERINFO = "MobileSDKUserInfo";
 
 	private static final String JOB_MOBILE_GAME_DOWNLOAD = "Mobile Game Download Statistic";
 	private static final String JOB_MOBILE_SDK_ACTIVE_USER = "Mobile SDK Active User Statistic";
 	private static final String JOB_MOBILE_SDK_ANALYSIS = "Mobile SDK Analysis Data Collection";
+	private static final String JOB_MOBILE_SDK_USERINFO = "Mobile SDK Analysis User Info Collection";
 
 	// private static final int REDUCE_NUMBER = 6;
 
@@ -44,6 +49,9 @@ public class JobRunner {
 							String.class));
 			jobEntryMap.put(TYPE_MOBILE_SDK_ACTIVE_USER, JobRunner.class
 					.getMethod("getMobileSDKActiveUsers", String.class,
+							String.class));
+			jobEntryMap.put(TYPE_MOBILE_SDK_USERINFO, JobRunner.class
+					.getMethod("getMobileSDKUserInfo", String.class,
 							String.class));
 		} catch (SecurityException e) {
 			e.printStackTrace();
@@ -62,7 +70,6 @@ public class JobRunner {
 			return (Integer) jobEntryMap.get(type).invoke(null, inputPath,
 					outputPath);
 		}
-
 		return 0;
 	}
 
@@ -126,6 +133,30 @@ public class JobRunner {
 		long timeEnd = System.currentTimeMillis();
 		System.err.println("The total cost: " + (timeEnd - timeStart));
 
+		return exitCode;
+	}
+	
+	public static int getMobileSDKUserInfo(String inputPath,
+			String outputPath) throws IOException, InterruptedException,
+			ClassNotFoundException {
+		long timeStart = System.currentTimeMillis();
+		
+		Job job = new Job();
+		job.setJarByClass(LogAnalyzerMR.class);
+		job.setJobName(JOB_MOBILE_SDK_USERINFO);
+		FileInputFormat.addInputPath(job, new Path(inputPath));
+		FileOutputFormat.setOutputPath(job, new Path(outputPath));
+		
+		job.setMapperClass(MobileSDKUserInfoMapper.class);
+		job.setReducerClass(MobileSDKUserInfoReducer.class);
+		
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Text.class);
+		int exitCode = job.waitForCompletion(true) ? 0 : 1;
+		
+		long timeEnd = System.currentTimeMillis();
+		System.err.println("The total cost: " + (timeEnd - timeStart));
+		
 		return exitCode;
 	}
 
