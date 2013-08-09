@@ -39,19 +39,19 @@ hive -e "
 	stored as textfile
 	location '/apilogs/src/100001/';
   
-	create table if not exists sdk_active_user_stat (
+	drop table game_active_user_stat;
+	create table if not exists game_active_user_stat(
 		stat_day string,
-		active_user_count bigint
+		PACKAGE_NAME string,
+		VERSION_CODE string,
+		user_count bigint
 	)
-	Row Format Delimited
-	Fields Terminated By ','
+	Row Format Delimited 
+	Fields Terminated By '\t' 
 	stored as textfile;
 
-	insert overwrite table sdk_active_user_stat 
-		select 
-			case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000  then from_unixtime(SERVER_TIME,'yyyyMMdd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyyMMdd') end as stat_day
-    		,count(DISTINCT CELL_PHONE_DEVICE_ID ) as active_user_count          
-		from sdk100001
-		group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000  then from_unixtime(SERVER_TIME,'yyyyMMdd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyyMMdd') end ;
+	insert overwrite table game_active_user_stat 
+		select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyyMMdd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyyMMdd') end as stat_day,PACKAGE_NAME,VERSION_CODE,count(DISTINCT CELL_PHONE_DEVICE_ID) as user_count from sdk100001 group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyyMMdd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyyMMdd') end,PACKAGE_NAME,VERSION_CODE;
+
 "
 

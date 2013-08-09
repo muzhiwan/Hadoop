@@ -19,8 +19,12 @@ public class Utility {
 	}
 
 	public static String timeToDate(long time) {
+		return timeToDate(time,"yyyy-MM-dd");
+	}
+	
+	public static String timeToDate(long time,String fm) {
 		Date date = new Date(time);
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		SimpleDateFormat sdf = new SimpleDateFormat(fm);
 		
 		return sdf.format(date);
 	}

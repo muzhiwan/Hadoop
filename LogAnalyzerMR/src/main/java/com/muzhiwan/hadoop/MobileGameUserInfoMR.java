@@ -7,9 +7,9 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
-public class MobileSDKUserInfoMR {
+public class MobileGameUserInfoMR {
 
-	public static class MobileSDKUserInfoMapper extends Mapper<LongWritable, Text, Text, Text> {
+	public static class GameUserInfoMapper extends Mapper<LongWritable, Text, Text, Text> {
 
 		private Text mapkey = new Text();
 		private Text mapvalue = new Text();
@@ -21,7 +21,11 @@ public class MobileSDKUserInfoMR {
 					long serverTime = Long.parseLong(data[Utils100001.INPUT_SERVER_TIME])* 1000;
 					long clientTime = Long.parseLong(data[Utils100001.INPUT_CLIENT_TIME]);
 					long time = Utility.getValidTime(clientTime, serverTime);
-					String mapperKey = data[Utils100001.INPUT_CELL_PHONE_DEVICE_ID];
+					String mapperKey = String.format("%s\t%s\t%s",
+							data[Utils100001.INPUT_CELL_PHONE_DEVICE_ID],
+							data[Utils100001.INPUT_PACKAGE_NAME],
+							data[Utils100001.INPUT_VERSION_CODE]
+						);
 					String mapperValue	=	String.format("%d\t%s\t%s\t%s\t%s\t%s\t%s",
 							time,
 							data[Utils100001.INPUT_CELL_PHONE_BRAND],
@@ -42,7 +46,7 @@ public class MobileSDKUserInfoMR {
 		}
 	}
 
-	public static class MobileSDKUserInfoReducer extends Reducer<Text, Text, Text, Text>  {
+	public static class GameUserInfoReducer extends Reducer<Text, Text, Text, Text>  {
 
 		private static final String DELIMITER = "\t";
 		private String vstr;

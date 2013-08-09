@@ -14,14 +14,14 @@ hadoop jar /root/LogAnalyzerMR.jar com.muzhiwan.hadoop.LogAnalyzerMR MobileSDKUs
 hive -e "
 	drop table sdk_user_info;
 	create table if not exists sdk_user_info (
-          CELL_PHONE_DEVICE_ID string,
-          CELL_PHONE_BRAND string,
-          CELL_PHONE_MODEL string,
-          CELL_PHONE_CPU string,
-          CELL_PHONE_DENSITY string,
-          CELL_PHONE_SCREEN_WIDTH string,
-          CELL_PHONE_SCREEN_HEIGHT string,
-          first_time bigint
+		CELL_PHONE_DEVICE_ID string,
+		first_time bigint,
+		CELL_PHONE_BRAND string,
+		CELL_PHONE_MODEL string,
+		CELL_PHONE_CPU string,
+		CELL_PHONE_DENSITY string,
+		CELL_PHONE_SCREEN_WIDTH string,
+		CELL_PHONE_SCREEN_HEIGHT string
 	)
 	Row Format Delimited
 	Fields Terminated By '\t'
@@ -31,8 +31,8 @@ hive -e "
 	
 	drop table sdk_new_user_stat;
 	create table if not exists sdk_new_user_stat (
-     stat_day string,
-     new_user_count bigint
+		stat_day string,
+		new_user_count bigint
 	)
 	Row Format Delimited
 	Fields Terminated By ','

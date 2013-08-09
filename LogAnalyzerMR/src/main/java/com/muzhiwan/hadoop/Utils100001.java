@@ -27,8 +27,8 @@ public class Utils100001 {
 	
 	public static final int INPUT_TITLE = 17;
 	public static final int INPUT_PACKAGE_NAME = 18;
-	// public static final int INPUT_VERSION_CODE = 19;
-	public static final int INPUT_VERSION = 20;
+	public static final int INPUT_VERSION_CODE = 19;
+//	public static final int INPUT_VERSION = 20;
 /*	public static final int INPUT_SESSION_ID = 21;
 	public static final int INPUT_UID = 22;
 	public static final int INPUT_FLAG_ROOT = 23;

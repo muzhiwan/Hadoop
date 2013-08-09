@@ -1,12 +1,15 @@
 #!/bin/bash
 
-
 log="/root/logs/collector.log"
+eventId="$1"
+year=`date +"%Y"`
+month="$2"
+day="$3"
 
-rootDir="/Data/webapps/stat.anquanxia.com/logs/100001/"
+rootDir="/Data/webapps/stat.anquanxia.com/logs/${eventId}/"
 
-destDir="/root/logs/100001/"
-hdfsDir="/apilogs/src/100001"
+destDir="/root/logs/${eventId}/"
+hdfsDir="/apilogs/src/${eventId}"
 
 echo "*************  start time : `date +"%F %T"` ******************" >> ${log}
 
@@ -15,9 +18,7 @@ starttime=`date +"%s"`
 mkdir -p "${destDir}"
 hadoop fs -mkdir "${hdfsDir}"
 
-year=`date +"%Y"`
-month=`date +"%m"`
-day=`date -d yesterday +"%d"`
+
 
 logDir="${rootDir}${year}/${month}/${day}/"
 tmplog="${destDir}${year}${month}${day}.txt"
