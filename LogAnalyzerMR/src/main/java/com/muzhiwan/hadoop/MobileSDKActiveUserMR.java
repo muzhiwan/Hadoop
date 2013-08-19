@@ -25,7 +25,7 @@ public class MobileSDKActiveUserMR {
 					long time = Utility.getValidTime(clientTime, serverTime);
 					
 					String mapperKey	=	String.format("%s\t%s",
-							Utility.timeToDate(time,"yyyyMMdd"),
+							Utility.timeToDate(time,"yyyy-MM-dd"),
 							data[Utils100001.INPUT_CELL_PHONE_DEVICE_ID]);
 					mapkey.set(mapperKey);
 					mapvalue.set("");

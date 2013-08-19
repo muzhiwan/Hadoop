@@ -6,8 +6,8 @@ public class Utils100001 {
 	public static final String DEFAULT_TIME = "0";
 	
 	public static final int INPUT_SERVER_TIME = 0;
-/*	public static final int INPUT_CLIENT_IP = 1;
-	public static final int INPUT_CLIENT_AREA = 2;*/
+	public static final int INPUT_CLIENT_IP = 1;
+	public static final int INPUT_CLIENT_AREA = 2;
 	
 	public static final int INPUT_EVENT_CLASS_ID = 3;
 	public static final int INPUT_CLIENT_TIME = 4;
