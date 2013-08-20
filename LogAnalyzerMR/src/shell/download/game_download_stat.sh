@@ -60,6 +60,21 @@
             APK_ID,PACKAGE_NAME,VERSION_CODE,count(DISTINCT CELL_PHONE_DEVICE_ID) as download_count 
         from sdk200003 group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,APK_ID,PACKAGE_NAME,VERSION_CODE;
     
+     drop table game_download_stat_sort;
+    create table if not exists game_download_stat_sort (
+         stat_day string,
+        APK_ID string,
+        PACKAGE_NAME string,
+        VERSION_CODE string,
+        download_count bigint
+    )
+    Row Format Delimited
+    Fields Terminated By '\t'
+    stored as textfile;
+    
+    insert overwrite table game_download_stat_sort 
+     SELECT * FROM game_download_stat where download_count>0 order by download_count desc;
+    
  "
  
  

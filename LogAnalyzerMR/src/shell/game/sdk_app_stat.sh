@@ -22,8 +22,7 @@
         TITLE string,
         PACKAGE_NAME string,
         VERSION_NAME string,
-        VERSION_CODE string,
-        APK_ID string
+        VERSION_CODE string
     )
     row format delimited
     fields terminated by '\\001'
@@ -34,7 +33,6 @@
     create table if not exists sdk_app_stat (
         CELL_PHONE_BRAND string,
         CELL_PHONE_MODEL string,
-        TITLE string,
         PACKAGE_NAME string,
         VERSION_NAME string,
         count bigint
@@ -44,9 +42,24 @@
     stored as textfile;
     
     insert overwrite table sdk_app_stat 
-		select CELL_PHONE_BRAND,CELL_PHONE_MODEL,TITLE,PACKAGE_NAME,VERSION_NAME,count(DISTINCT CELL_PHONE_DEVICE_ID) as count 
+		select CELL_PHONE_BRAND,CELL_PHONE_MODEL,PACKAGE_NAME,VERSION_NAME,count(DISTINCT CELL_PHONE_DEVICE_ID) as count 
         from sdk200007
-        group by CELL_PHONE_BRAND,CELL_PHONE_MODEL,TITLE,PACKAGE_NAME,VERSION_NAME;
+        group by CELL_PHONE_BRAND,CELL_PHONE_MODEL,PACKAGE_NAME,VERSION_NAME;
+    
+    drop table sdk_app_stat_sort;
+    create table if not exists sdk_app_stat_sort (
+        CELL_PHONE_BRAND string,
+        CELL_PHONE_MODEL string,
+        PACKAGE_NAME string,
+        VERSION_NAME string,
+        count bigint
+    )
+    Row Format Delimited
+    Fields Terminated By '\t'
+    stored as textfile;
+    
+    insert overwrite table sdk_app_stat_sort 
+     SELECT * FROM sdk_app_stat where count>0 and length(VERSION_NAME)<255 order by count desc;
     
  "
  
