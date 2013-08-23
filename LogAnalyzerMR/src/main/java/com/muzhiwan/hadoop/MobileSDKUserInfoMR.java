@@ -13,11 +13,12 @@ public class MobileSDKUserInfoMR {
 
 		private Text mapkey = new Text();
 		private Text mapvalue = new Text();
+		public static final String EVENT_CLASS_ID = "100003";
 
 		public void map(LongWritable key, Text value, Context context) {
 			String data[] = value.toString().split(Utils100001.DELIMITER);
 			try{
-				if (data.length==30&&data[Utils100001.INPUT_EVENT_CLASS_ID].equals(Utils100001.EVENT_CLASS_ID)) {
+				if (data.length==24&&data[Utils100001.INPUT_EVENT_CLASS_ID].equals(EVENT_CLASS_ID)) {
 					long serverTime = Long.parseLong(data[Utils100001.INPUT_SERVER_TIME])* 1000;
 					long clientTime = Long.parseLong(data[Utils100001.INPUT_CLIENT_TIME]);
 					long time = Utility.getValidTime(clientTime, serverTime);

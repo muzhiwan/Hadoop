@@ -26,8 +26,9 @@ public class MobileGameUserInfoMR {
 							data[Utils100001.INPUT_PACKAGE_NAME],
 							data[Utils100001.INPUT_VERSION_CODE]
 						);
-					String mapperValue	=	String.format("%d\t%s\t%s\t%s\t%s\t%s\t%s",
+					String mapperValue	=	String.format("%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
 							time,
+							data[Utils100001.INPUT_VERSION],
 							data[Utils100001.INPUT_CELL_PHONE_BRAND],
 							data[Utils100001.INPUT_CELL_PHONE_MODEL],
 							data[Utils100001.INPUT_CELL_PHONE_CPU],
