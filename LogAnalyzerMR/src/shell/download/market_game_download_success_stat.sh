@@ -47,11 +47,11 @@
     
     create table if not exists market_game_download_stat_tmp (
         day string,
-        apkid bigint,
+        apkid int,
         package string,
-        versioncode bigint,
+        versioncode int,
         versionname string,
-        total bigint
+        total int
     )
     Row Format Delimited
     Fields Terminated By '\t'
@@ -67,12 +67,12 @@
     drop table market_game_download_stat;
     create table if not exists market_game_download_stat (
          day string,
-         time bigint,
-         apkid bigint,
+         time int,
+         apkid int,
          package string,
-         versioncode bigint,
+         versioncode int,
          versionname string,
-         total bigint
+         total int
      )
     Row Format Delimited
     Fields Terminated By '\t'

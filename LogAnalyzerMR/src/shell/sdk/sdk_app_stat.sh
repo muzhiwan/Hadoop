@@ -34,9 +34,9 @@
         brand string,
         model string,
         package string,
-        versioncode bigint,
+        versioncode int,
         versionname string,
-        total bigint
+        total int
     )
     Row Format Delimited
     Fields Terminated By '\t'
@@ -53,9 +53,9 @@
         brand string,
         model string,
         package string,
-        versioncode bigint,
+        versioncode int,
         versionname string,
-        total bigint
+        total int
     )
     Row Format Delimited
     Fields Terminated By '\t'

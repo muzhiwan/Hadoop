@@ -15,15 +15,15 @@ hive -e "
     create table if not exists sdk_game_user_info (
         device_id string,
         package string,
-        versioncode bigint,
+        versioncode int,
         first_time bigint,
         versionname string,
         brand string,
         model string,
         cpu string,
         density string,
-        screen_width bigint,
-        screen_height bigint
+        screen_width int,
+        screen_height int
     )
     Row Format Delimited
     Fields Terminated By '\t'
@@ -35,9 +35,9 @@ hive -e "
     create table if not exists sdk_game_new_user_stat_tmp (
         stat_day string,
         PACKAGE_NAME string,
-        VERSION_CODE bigint,
+        VERSION_CODE int,
         versionname string,
-        user_count bigint
+        user_count int
     )
     Row Format Delimited
     Fields Terminated By '\t'
@@ -51,11 +51,11 @@ hive -e "
      drop table sdk_game_new_user_stat;
     create table if not exists sdk_game_new_user_stat(
         day string,
-        time bigint,
+        time int,
         package string,
-        versioncode bigint,
+        versioncode int,
         versionname string,
-        total bigint
+        total int
     )
     Row Format Delimited 
     Fields Terminated By '\t' 
@@ -87,7 +87,7 @@ hive -e "
         CELL_PHONE_DEVICE_ID string,
         TITLE string,
         PACKAGE_NAME string,
-        VERSION_CODE bigint,
+        VERSION_CODE int,
         VERSION string,
         SESSION_ID string,
         UID string,
@@ -108,9 +108,9 @@ hive -e "
     create table if not exists sdk_game_active_user_stat_tmp(
         stat_day string,
         PACKAGE_NAME string,
-        VERSION_CODE bigint,
+        VERSION_CODE int,
         VERSION string,
-        user_count bigint
+        user_count int
     )
     Row Format Delimited 
     Fields Terminated By '\t' 
@@ -126,11 +126,11 @@ hive -e "
     drop table sdk_game_active_user_stat;
     create table if not exists sdk_game_active_user_stat(
         day string,
-        time bigint,
+        time int,
         package string,
-        versioncode bigint,
+        versioncode int,
         versionname string,
-        total bigint
+        total int
     )
     Row Format Delimited 
     Fields Terminated By '\t' 

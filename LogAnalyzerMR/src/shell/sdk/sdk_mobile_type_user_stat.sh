@@ -5,11 +5,11 @@ hive -e "
     create table if not exists sdk_mobile_type_active_user_stat_tmp(
         day string,
         package string,
-        versioncode bigint,
+        versioncode int,
         versionname string,
         brand string,
         model string,
-        total bigint
+        total int
     )
     Row Format Delimited 
     Fields Terminated By '\t' 
@@ -24,13 +24,13 @@ hive -e "
     drop table sdk_mobile_type_active_user_stat;
     create table if not exists sdk_mobile_type_active_user_stat (
         day string,
-        time bigint,
+        time int,
         package string,
-        versioncode bigint,
+        versioncode int,
         versionname string,
         brand string,
         model string,
-        total bigint
+        total int
     )
     Row Format Delimited
     Fields Terminated By '\t'
@@ -47,11 +47,11 @@ hive -e "
     create table if not exists sdk_mobile_type_new_user_stat_tmp (
         day string,
         package string,
-        versioncode bigint,
+        versioncode int,
         versionname string,
         brand string,
         model string,
-        total bigint
+        total int
     )
     Row Format Delimited
     Fields Terminated By '\t'
@@ -65,13 +65,13 @@ hive -e "
     drop table sdk_mobile_type_new_user_stat;
     create table if not exists sdk_mobile_type_new_user_stat (
         day string,
-        time bigint,
+        time int,
         package string,
-        versioncode bigint,
+        versioncode int,
         versionname string,
         brand string,
         model string,
-        total bigint
+        total int
     )
     Row Format Delimited
     Fields Terminated By '\t'

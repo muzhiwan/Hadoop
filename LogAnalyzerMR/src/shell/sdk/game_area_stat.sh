@@ -39,22 +39,24 @@
     location '/apilogs/src/100001/';
   
     drop table game_area_stat;
-    create table if not exists game_area_stat(
-        stat_day string,
-        PACKAGE_NAME string,
-        VERSION_CODE string,
+    create table if not exists sdk_game_area_stat(
+        day string,
+        package string,
+        versioncode int,
+        versionname string,
         area string,
-        user_count bigint
+        total int
     )
     Row Format Delimited 
     Fields Terminated By '\t' 
     stored as textfile;
     
-    insert overwrite table game_active_user_stat 
+    insert overwrite table sdk_game_area_stat 
     select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as stat_day,
-    PACKAGE_NAME,VERSION_CODE,substr(CLIENT_AREA,0, find_in_set(CLIENT_AREA," ")) ,count(DISTINCT CELL_PHONE_DEVICE_ID) as user_count
+    PACKAGE_NAME,VERSION_CODE,VERSION,regexp_extract(CLIENT_AREA, '(\S+)(\s+)(\S+)', 0) ,count(DISTINCT CELL_PHONE_DEVICE_ID) as total
     from sdk100001 group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end
-    ,PACKAGE_NAME,VERSION_CODE,substr(CLIENT_AREA,0, find_in_set(CLIENT_AREA," ")) ;
+    ,PACKAGE_NAME,VERSION_CODE,VERSION,regexp_extract(CLIENT_AREA, '(\S+)(\s+)(\S+)', 0) ;
+
 
 "
 
