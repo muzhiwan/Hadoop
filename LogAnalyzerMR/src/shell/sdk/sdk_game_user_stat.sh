@@ -145,6 +145,8 @@ hive -e "
     
 "
 
+hadoop fs -rmr "${destDir}"
+
 mysql -h10.1.1.2 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 	DROP TABLE IF EXISTS sdk_game_user_info;
 	CREATE TABLE sdk_game_user_info (
