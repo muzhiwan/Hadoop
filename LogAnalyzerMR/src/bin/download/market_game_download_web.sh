@@ -1,6 +1,6 @@
 #!/bin/bash
 
-/opt/hive/bin/hive -e "
+sudo -u hdfs hive -e "
     create EXTERNAL table if not exists web814 (
         SERVER_TIME bigint,
         CLIENT_IP string,
@@ -49,14 +49,12 @@
 		  time int(10) NOT NULL,
 		  gameId int(10) NOT NULL,
 		  total int(10) NOT NULL,
-		  KEY index_gameId (gameId),
-		  KEY index_time (time),
-		  KEY index_total (total)
+		  KEY index_gameId (gameId)
 	);
 
 EOF
 
- /opt/sqoop/bin/sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table market_game_download_web --export-dir /user/hive/warehouse/market_game_download_web --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+ sudo -u hdfs  sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table market_game_download_web --export-dir /user/hive/warehouse/market_game_download_web --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
 
 mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  market_game_download_web  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 

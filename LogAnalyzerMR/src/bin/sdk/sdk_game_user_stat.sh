@@ -1,16 +1,16 @@
 #!/bin/bash
 
 srcDir="/apilogs/src/100001"
-destDir="/user/root/out/MobileGameUserInfo"
+destDir="/user/hdfs/out/MobileGameUserInfo"
 
-hadoop fs -mkdir "${destDir}"
+sudo -u hdfs hadoop fs -mkdir "${destDir}"
 
 starttime=`date +"%s"`
 outputPath="${destDir}/${starttime}"
 
-hadoop jar /root/LogAnalyzerMR.jar com.muzhiwan.hadoop.LogAnalyzerMR MobileGAMEUserInfo "${srcDir}" "${outputPath}"
+sudo -u hdfs hadoop jar /home/hdfs/LogAnalyzerMR.jar com.muzhiwan.hadoop.LogAnalyzerMR MobileGAMEUserInfo "${srcDir}" "${outputPath}"
 
-hive -e "
+sudo -u hdfs hive -e "
     drop table sdk_game_user_info;
     create table if not exists sdk_game_user_info (
         device_id string,
@@ -139,13 +139,14 @@ hive -e "
     insert overwrite table sdk_game_active_user_stat 
      SELECT stat_day as day,unix_timestamp(stat_day,'yyyy-MM-dd')  as time,PACKAGE_NAME as package,VERSION_CODE as versioncode,VERSION as versionname,user_count as total 
      FROM sdk_game_active_user_stat_tmp 
-     where user_count>0 order by total desc;
+     where user_count>0 and stat_day is not null 
+     order by total desc;
     
     drop table sdk_game_active_user_stat_tmp;
     
 "
 
-hadoop fs -rmr "${destDir}"
+sudo -u hdfs hadoop fs -rmr "${destDir}"
 
 mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 	DROP TABLE IF EXISTS sdk_game_user_info;
@@ -193,14 +194,12 @@ mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
 EOF
 
-/opt/sqoop/bin/sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_game_user_info --export-dir /user/hive/warehouse/sdk_game_user_info --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
-/opt/sqoop/bin/sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_game_new_user_stat --export-dir /user/hive/warehouse/sdk_game_new_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
-/opt/sqoop/bin/sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_game_active_user_stat --export-dir /user/hive/warehouse/sdk_game_active_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+sudo -u hdfs  sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_game_user_info --export-dir /user/hive/warehouse/sdk_game_user_info --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+sudo -u hdfs  sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_game_new_user_stat --export-dir /user/hive/warehouse/sdk_game_new_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+sudo -u hdfs  sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_game_active_user_stat --export-dir /user/hive/warehouse/sdk_game_active_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
 
 mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_game_user_info  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_game_active_user_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_game_new_user_stat 	ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
-
-
 
 

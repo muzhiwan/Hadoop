@@ -1,6 +1,6 @@
 #!/bin/bash
 
-hive -e "
+sudo -u hdfs hive -e "
     drop table sdk_mobile_type_active_user_stat_tmp;
     create table if not exists sdk_mobile_type_active_user_stat_tmp(
         day string,
@@ -118,8 +118,8 @@ mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
 EOF
 
-/opt/sqoop/bin/sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_mobile_type_active_user_stat --export-dir /user/hive/warehouse/sdk_mobile_type_active_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
-/opt/sqoop/bin/sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_mobile_type_new_user_stat --export-dir /user/hive/warehouse/sdk_mobile_type_new_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+sudo -u hdfs  sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_mobile_type_active_user_stat --export-dir /user/hive/warehouse/sdk_mobile_type_active_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+sudo -u hdfs  sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_mobile_type_new_user_stat --export-dir /user/hive/warehouse/sdk_mobile_type_new_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
 
 mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e"ALTER TABLE  sdk_mobile_type_active_user_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_mobile_type_new_user_stat     ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
