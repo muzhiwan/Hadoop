@@ -39,7 +39,7 @@ sudo -u hdfs hive -e "
     insert overwrite table sdk_mobile_type_active_user_stat 
      SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,package,versioncode,versionname,brand,model,total 
      FROM sdk_mobile_type_active_user_stat_tmp 
-     where total>0 and length(versionname)<100 order by total desc;
+     where total>0 and length(versionname)<100  and day is not null order by total desc;
     
     drop table sdk_mobile_type_active_user_stat_tmp;
     
@@ -84,7 +84,7 @@ sudo -u hdfs hive -e "
     
     drop table sdk_mobile_type_new_user_stat_tmp; 
 "
-mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
 	DROP TABLE IF EXISTS sdk_mobile_type_active_user_stat;
 	CREATE TABLE sdk_mobile_type_active_user_stat (
@@ -118,10 +118,10 @@ mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
 EOF
 
-sudo -u hdfs  sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_mobile_type_active_user_stat --export-dir /user/hive/warehouse/sdk_mobile_type_active_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
-sudo -u hdfs  sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_mobile_type_new_user_stat --export-dir /user/hive/warehouse/sdk_mobile_type_new_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_mobile_type_active_user_stat --export-dir /user/hive/warehouse/sdk_mobile_type_active_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_mobile_type_new_user_stat --export-dir /user/hive/warehouse/sdk_mobile_type_new_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
 
-mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e"ALTER TABLE  sdk_mobile_type_active_user_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
-mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_mobile_type_new_user_stat     ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e"ALTER TABLE  sdk_mobile_type_active_user_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_mobile_type_new_user_stat     ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-/opt/hive/bin/hive -e "
-    create EXTERNAL table if not exists sdk200003 (
+sudo -u hdfs hive -e "
+    create EXTERNAL table if not exists sdk200002 (
         SERVER_TIME bigint,
         CLIENT_IP string,
         CLIENT_AREA string,
@@ -31,21 +31,26 @@
         FLAG_LOGIN_ACCOUNT bigint,
         OPERATION_TAG string,
         CHANNEL string,
-        APK_SOURCE string,
-        CATEGORY string,
-        COST_TIME bigint,
-        SERVER_IP string,
-        PROGRESS bigint,
-        REALURL string
+        
+        errorcode int,
+        errormsg string,
+        responsecode int,
+        savepath string,
+        url string,
+        sdcardavaliablesize int,
+        sdcardtotalsize int,
+        sdcardmounted int,
+        serverip string,
+        contact string
     )
     row format delimited
     fields terminated by '\\001'
     stored as textfile
-    location '/apilogs/src/200003/';
+    location '/apilogs/src/200002/';
   
     drop table market_game_download_stat_tmp;
     
-    create table if not exists market_game_download_stat_tmp (
+    create table if not exists market_game_download_error_stat_tmp (
         day string,
         apkid int,
         package string,
@@ -57,15 +62,15 @@
     Fields Terminated By '\t'
     stored as textfile;
 
-    insert overwrite table market_game_download_stat_tmp 
+    insert overwrite table market_game_download_error_stat_tmp 
         select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
             APK_ID,PACKAGE_NAME,VERSION_CODE,VERSION,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
-        from sdk200003 
+        from sdk200002
         where VERSION_CODE<10000000000 and length(VERSION)<100
         group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,APK_ID,PACKAGE_NAME,VERSION_CODE,VERSION;
     
-    drop table market_game_download_stat;
-    create table if not exists market_game_download_stat (
+    drop table market_game_download_error_stat;
+    create table if not exists market_game_download_error_stat (
          day string,
          time int,
          apkid int,
@@ -78,38 +83,38 @@
     Fields Terminated By '\t'
     stored as textfile;
     
-    insert overwrite table market_game_download_stat 
+    insert overwrite table market_game_download_error_stat 
      SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,package,versioncode,versionname,total 
-     FROM market_game_download_stat_tmp 
+     FROM market_game_download_error_stat_tmp 
      where total>0 and apkid<10000000000
      order by total desc;
     
-    drop table market_game_download_stat_tmp;
+    drop table market_game_download_error_stat_tmp;
     
  "
  
- mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
+ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
-	DROP TABLE IF EXISTS market_game_download_stat;
-	CREATE TABLE market_game_download_stat (
-		  day varchar(255) NOT NULL,
-		  time int(10) NOT NULL,
-		  apkid int(10) NOT NULL,
-		  package varchar(255) NOT NULL,
-		  versioncode int(10) NOT NULL,
-		  versionname varchar(255) NOT NULL,
-		  total int(10) NOT NULL,
-		  KEY index_apkid (apkid),
-		  KEY index_package (package),
-		  KEY index_total (total),
-		  KEY index_package_versioncode (package,versioncode)
-	);
+    DROP TABLE IF EXISTS market_game_download_error_stat;
+    CREATE TABLE market_game_download_error_stat (
+          day varchar(255) NOT NULL,
+          time int(10) NOT NULL,
+          apkid int(10) NOT NULL,
+          package varchar(255) NOT NULL,
+          versioncode int(10) NOT NULL,
+          versionname varchar(255) NOT NULL,
+          total int(10) NOT NULL,
+          KEY index_apkid (apkid),
+          KEY index_package (package),
+          KEY index_total (total),
+          KEY index_package_versioncode (package,versioncode)
+    );
 
 EOF
 
- /opt/sqoop/bin/sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table market_game_download_stat --export-dir /user/hive/warehouse/market_game_download_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+ sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table market_game_download_error_stat --export-dir /user/hive/warehouse/market_game_download_error_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
 
-mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  market_game_download_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  market_game_download_error_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 
  
  

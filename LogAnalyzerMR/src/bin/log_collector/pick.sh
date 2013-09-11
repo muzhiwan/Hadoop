@@ -5,7 +5,7 @@ month=`date -d yesterday +"%m"`
 day=`date -d yesterday +"%d"`
 
 #for event in "${events[@]}"; do
-for event in $(ll /Data/webapps/stat.anquanxia.com/tjlogs | awk '{print $9}'); do
-       /root/logs/log_collector.sh "${event}" "${month}" "${day}"
+for event in $(ls -l /tjlogs | awk '{print $9}'); do
+       /home/hdfs/log_pick/log_collector.sh "${event}" "${month}" "${day}"
 done
 

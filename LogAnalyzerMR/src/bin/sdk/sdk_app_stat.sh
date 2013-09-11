@@ -63,12 +63,12 @@ sudo -u hdfs hive -e "
     
     insert overwrite table sdk_app_stat 
      SELECT brand,model,package,versioncode,versionname,total  FROM sdk_app_stat_tmp 
-     where total>0 order by total desc;
+     where total>5 order by total desc;
     
     drop table sdk_app_stat_tmp;
     
  "
- mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
+ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
 	DROP TABLE IF EXISTS sdk_app_stat;
 	CREATE TABLE IF NOT EXISTS sdk_app_stat (
@@ -83,7 +83,15 @@ sudo -u hdfs hive -e "
 		  KEY index_package_versioncode (package,versioncode)
 	) ;
 
-    DROP TABLE IF EXISTS sdk_app_stat_copy;
+EOF
+
+sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_app_stat --export-dir /user/hive/warehouse/sdk_app_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_app_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+
+mysql -h10.1.1.16  -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
+
+	DROP TABLE IF EXISTS sdk_app_stat_copy;
     CREATE TABLE sdk_app_stat_copy (   
         id int(10) NOT NULL AUTO_INCREMENT,   
         brand varchar(255) NOT NULL,   
@@ -100,7 +108,7 @@ sudo -u hdfs hive -e "
         KEY index_package_versioncode (package,versioncode),   
         KEY index_brand (brand),   KEY index_model (model),   
         KEY index_vid (vid) 
-    ) ;
+    )DEFAULT CHARSET=utf8 ;
     INSERT INTO sdk_app_stat_copy
         (
         brand, 
@@ -124,14 +132,9 @@ sudo -u hdfs hive -e "
     FROM (mzw_game_v v, sdk_app_stat s)
     WHERE  
         s.package=v.package AND 
-        s.versioncode = v.versioncode 
-    ORDER BY id ASC;
+        s.versioncode = v.versioncode ;
     
 EOF
-
-sudo -u hdfs  sqoop export --connect jdbc:mysql://114.112.50.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_app_stat --export-dir /user/hive/warehouse/sdk_app_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
-
-mysql -h114.112.50.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_app_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 
 
 

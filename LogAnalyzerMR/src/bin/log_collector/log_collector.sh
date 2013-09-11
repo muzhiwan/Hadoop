@@ -1,22 +1,23 @@
 #!/bin/bash
 
-log="/root/logs/collector.log"
+
+destDir="/home/hdfs/log_pick/"
+
+log="${destDir}collector.log"
+
 eventId="$1"
 year=`date +"%Y"`
 month="$2"
 day="$3"
 
-rootDir="/Data/webapps/stat.anquanxia.com/logs/${eventId}/"
-
-#destDir="/root/logs/${eventId}/"
-destDir="/root/logs/"
+rootDir="/tjlogs/${eventId}/"
 hdfsDir="/apilogs/src/${eventId}"
 
 echo "*************  start time : `date +"%F %T"` ******************" >> ${log}
 
 starttime=`date +"%s"`
 
-hadoop fs -mkdir "${hdfsDir}"
+sudo -u hdfs hadoop fs -mkdir "${hdfsDir}"
 
 
 logDir="${rootDir}${year}/${month}/${day}/"
@@ -25,8 +26,8 @@ rm -f "${tmplog}"
 
 find "${logDir}" -name "*.txt" -type f -exec cat >> "${tmplog}" {} \;
 
-hadoop fs -rm "${hdfsDir}/${year}${month}${day}.txt"
-hadoop fs -put "${tmplog}" "${hdfsDir}"
+sudo -u hdfs hadoop fs -rm "${hdfsDir}/${year}${month}${day}.txt"
+sudo -u hdfs hadoop fs -put "${tmplog}" "${hdfsDir}"
 
 rm -f "${tmplog}"
 
