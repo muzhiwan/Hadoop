@@ -35,7 +35,6 @@ sudo -u hdfs hive -e "
         model string,
         package string,
         versioncode int,
-        versionname string,
         total int
     )
     Row Format Delimited
@@ -43,10 +42,10 @@ sudo -u hdfs hive -e "
     stored as textfile;
     
     insert overwrite table sdk_app_stat_tmp 
-        select CELL_PHONE_BRAND,CELL_PHONE_MODEL,PACKAGE_NAME,VERSION_CODE,VERSION_NAME,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
+        select CELL_PHONE_BRAND,CELL_PHONE_MODEL,PACKAGE_NAME,VERSION_CODE,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
         from sdk200007
-        where VERSION_CODE<10000000000 and length(VERSION_NAME)<100
-        group by CELL_PHONE_BRAND,CELL_PHONE_MODEL,PACKAGE_NAME,VERSION_CODE,VERSION_NAME;
+        where VERSION_CODE<10000000000
+        group by CELL_PHONE_BRAND,CELL_PHONE_MODEL,PACKAGE_NAME,VERSION_CODE;
     
     drop table sdk_app_stat;
     create table if not exists sdk_app_stat (
@@ -54,7 +53,6 @@ sudo -u hdfs hive -e "
         model string,
         package string,
         versioncode int,
-        versionname string,
         total int
     )
     Row Format Delimited
@@ -62,7 +60,7 @@ sudo -u hdfs hive -e "
     stored as textfile;
     
     insert overwrite table sdk_app_stat 
-     SELECT brand,model,package,versioncode,versionname,total  FROM sdk_app_stat_tmp 
+     SELECT brand,model,package,versioncode,total  FROM sdk_app_stat_tmp 
      where total>5 order by total desc;
     
     drop table sdk_app_stat_tmp;
@@ -70,18 +68,17 @@ sudo -u hdfs hive -e "
  "
  mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
-	DROP TABLE IF EXISTS sdk_app_stat;
-	CREATE TABLE IF NOT EXISTS sdk_app_stat (
-		  brand varchar(255) DEFAULT NULL,
-		  model varchar(255) DEFAULT NULL,
-		  package varchar(255) DEFAULT NULL,
-		  versioncode int(10) DEFAULT NULL,
-		  versionname varchar(255) DEFAULT NULL,
-		  total int(10) DEFAULT NULL,
-		  KEY index_total (total),
-		  KEY index_package (package),
-		  KEY index_package_versioncode (package,versioncode)
-	) ;
+    DROP TABLE IF EXISTS sdk_app_stat;
+    CREATE TABLE IF NOT EXISTS sdk_app_stat (
+          brand varchar(255) DEFAULT NULL,
+          model varchar(255) DEFAULT NULL,
+          package varchar(255) DEFAULT NULL,
+          versioncode int(10) DEFAULT NULL,
+          total int(10) DEFAULT NULL,
+          KEY index_total (total),
+          KEY index_package (package),
+          KEY index_package_versioncode (package,versioncode)
+    ) ;
 
 EOF
 
@@ -91,7 +88,7 @@ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TA
 
 mysql -h10.1.1.16  -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
-	DROP TABLE IF EXISTS sdk_app_stat_copy;
+    DROP TABLE IF EXISTS sdk_app_stat_copy;
     CREATE TABLE sdk_app_stat_copy (   
         id int(10) NOT NULL AUTO_INCREMENT,   
         brand varchar(255) NOT NULL,   

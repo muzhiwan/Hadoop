@@ -36,7 +36,6 @@ sudo -u hdfs hive -e "
         stat_day string,
         PACKAGE_NAME string,
         VERSION_CODE int,
-        versionname string,
         user_count int
     )
     Row Format Delimited
@@ -44,9 +43,9 @@ sudo -u hdfs hive -e "
     stored as textfile;
 
     insert overwrite table sdk_game_new_user_stat_tmp 
-    select from_unixtime(floor(first_time/1000),'yyyy-MM-dd') as stat_day,package,versioncode,versionname,count(DISTINCT device_id ) as user_count 
+    select from_unixtime(floor(first_time/1000),'yyyy-MM-dd') as stat_day,package,versioncode,count(DISTINCT device_id ) as user_count 
     from sdk_game_user_info 
-    group by from_unixtime(floor(first_time/1000),'yyyy-MM-dd'),package,versioncode,versionname;
+    group by from_unixtime(floor(first_time/1000),'yyyy-MM-dd'),package,versioncode;
 
      drop table sdk_game_new_user_stat;
     create table if not exists sdk_game_new_user_stat(
@@ -54,7 +53,6 @@ sudo -u hdfs hive -e "
         time int,
         package string,
         versioncode int,
-        versionname string,
         total int
     )
     Row Format Delimited 
@@ -62,7 +60,7 @@ sudo -u hdfs hive -e "
     stored as textfile;
     
     insert overwrite table sdk_game_new_user_stat 
-     SELECT stat_day as day,unix_timestamp(stat_day,'yyyy-MM-dd')  as time,PACKAGE_NAME as package,VERSION_CODE as versioncode,versionname,user_count as total FROM sdk_game_new_user_stat_tmp where user_count>0 order by total desc;
+     SELECT stat_day as day,unix_timestamp(stat_day,'yyyy-MM-dd')  as time,PACKAGE_NAME as package,VERSION_CODE as versioncode,user_count as total FROM sdk_game_new_user_stat_tmp where user_count>0 order by total desc;
     
     drop table sdk_game_new_user_stat_tmp;
     
@@ -109,7 +107,6 @@ sudo -u hdfs hive -e "
         stat_day string,
         PACKAGE_NAME string,
         VERSION_CODE int,
-        VERSION string,
         user_count int
     )
     Row Format Delimited 
@@ -118,10 +115,10 @@ sudo -u hdfs hive -e "
 
     insert overwrite table sdk_game_active_user_stat_tmp 
     select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as stat_day,
-        PACKAGE_NAME,VERSION_CODE,VERSION,count(DISTINCT CELL_PHONE_DEVICE_ID) as user_count 
+        PACKAGE_NAME,VERSION_CODE,count(DISTINCT CELL_PHONE_DEVICE_ID) as user_count 
     from sdk100001 
-     where VERSION_CODE<10000000000 and length(VERSION)<100
-    group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,PACKAGE_NAME,VERSION_CODE,VERSION;
+     where VERSION_CODE<10000000000
+    group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,PACKAGE_NAME,VERSION_CODE;
 
     drop table sdk_game_active_user_stat;
     create table if not exists sdk_game_active_user_stat(
@@ -129,7 +126,6 @@ sudo -u hdfs hive -e "
         time int,
         package string,
         versioncode int,
-        versionname string,
         total int
     )
     Row Format Delimited 
@@ -137,7 +133,7 @@ sudo -u hdfs hive -e "
     stored as textfile;
     
     insert overwrite table sdk_game_active_user_stat 
-     SELECT stat_day as day,unix_timestamp(stat_day,'yyyy-MM-dd')  as time,PACKAGE_NAME as package,VERSION_CODE as versioncode,VERSION as versionname,user_count as total 
+     SELECT stat_day as day,unix_timestamp(stat_day,'yyyy-MM-dd')  as time,PACKAGE_NAME as package,VERSION_CODE as versioncode,user_count as total 
      FROM sdk_game_active_user_stat_tmp 
      where user_count>0 and stat_day is not null 
      order by total desc;
@@ -149,48 +145,46 @@ sudo -u hdfs hive -e "
 sudo -u hdfs hadoop fs -rmr "${destDir}"
 
 mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
-	DROP TABLE IF EXISTS sdk_game_user_info;
-	CREATE TABLE sdk_game_user_info (
-		  device_id varchar(255) NOT NULL,
-		  package varchar(255) NOT NULL,
-		  versioncode int(10) NOT NULL,
-		  first_time bigint(10) NOT NULL,
-		  versionname varchar(255) NOT NULL,
-		  brand varchar(255) NOT NULL,
-		  model varchar(255) NOT NULL,
-		  cpu varchar(255) NOT NULL,
-		  density varchar(255) NOT NULL,
-		  screen_width int(10) NOT NULL,
-		  screen_height int(10) NOT NULL
-	);
-	
-	DROP TABLE IF EXISTS sdk_game_active_user_stat;
-	CREATE TABLE sdk_game_active_user_stat (
-		  day varchar(255) NOT NULL,
-		  time int(10) NOT NULL,
-		  package varchar(255) NOT NULL,
-		  versioncode int(10) NOT NULL,
-		  versionname varchar(255) NOT NULL,
-		  total int(10) NOT NULL,
-		  KEY index_time (time),
-		  KEY index_total (total),
-		  KEY index_package (package),
-		  KEY index_package_versioncode (package,versioncode)
-	);
-	
-	DROP TABLE IF EXISTS sdk_game_new_user_stat;
-	CREATE TABLE sdk_game_new_user_stat (
-		  day varchar(255) NOT NULL,
-		  time int(10) NOT NULL,
-		  package varchar(255) NOT NULL,
-		  versioncode int(10) NOT NULL,
-		  versionname varchar(255) NOT NULL,
-		  total int(10) NOT NULL,
-		  KEY index_time (time),
-		  KEY index_total (total),
-		  KEY index_package (package),
-		  KEY index_package_versioncode (package,versioncode)
-	) ;
+    DROP TABLE IF EXISTS sdk_game_user_info;
+    CREATE TABLE sdk_game_user_info (
+          device_id varchar(255) NOT NULL,
+          package varchar(255) NOT NULL,
+          versioncode int(10) NOT NULL,
+          first_time bigint(10) NOT NULL,
+          versionname varchar(255) NOT NULL,
+          brand varchar(255) NOT NULL,
+          model varchar(255) NOT NULL,
+          cpu varchar(255) NOT NULL,
+          density varchar(255) NOT NULL,
+          screen_width int(10) NOT NULL,
+          screen_height int(10) NOT NULL
+    );
+    
+    DROP TABLE IF EXISTS sdk_game_active_user_stat;
+    CREATE TABLE sdk_game_active_user_stat (
+          day varchar(255) NOT NULL,
+          time int(10) NOT NULL,
+          package varchar(255) NOT NULL,
+          versioncode int(10) NOT NULL,
+          total int(10) NOT NULL,
+          KEY index_time (time),
+          KEY index_total (total),
+          KEY index_package (package),
+          KEY index_package_versioncode (package,versioncode)
+    );
+    
+    DROP TABLE IF EXISTS sdk_game_new_user_stat;
+    CREATE TABLE sdk_game_new_user_stat (
+          day varchar(255) NOT NULL,
+          time int(10) NOT NULL,
+          package varchar(255) NOT NULL,
+          versioncode int(10) NOT NULL,
+          total int(10) NOT NULL,
+          KEY index_time (time),
+          KEY index_total (total),
+          KEY index_package (package),
+          KEY index_package_versioncode (package,versioncode)
+    ) ;
 
 EOF
 
@@ -200,6 +194,6 @@ sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --user
 
 mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_game_user_info  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_game_active_user_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
-mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_game_new_user_stat 	ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_game_new_user_stat     ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 
 

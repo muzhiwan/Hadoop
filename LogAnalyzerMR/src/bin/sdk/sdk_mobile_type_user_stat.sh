@@ -6,7 +6,6 @@ sudo -u hdfs hive -e "
         day string,
         package string,
         versioncode int,
-        versionname string,
         brand string,
         model string,
         total int
@@ -17,9 +16,9 @@ sudo -u hdfs hive -e "
 
     insert overwrite table sdk_mobile_type_active_user_stat_tmp 
        select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
-              PACKAGE_NAME,VERSION_CODE,VERSION,CELL_PHONE_BRAND,CELL_PHONE_MODEL,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
+              PACKAGE_NAME,VERSION_CODE,CELL_PHONE_BRAND,CELL_PHONE_MODEL,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
        from sdk100001 
-       group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,PACKAGE_NAME,VERSION_CODE,VERSION,CELL_PHONE_BRAND,CELL_PHONE_MODEL;
+       group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,PACKAGE_NAME,VERSION_CODE,CELL_PHONE_BRAND,CELL_PHONE_MODEL;
     
     drop table sdk_mobile_type_active_user_stat;
     create table if not exists sdk_mobile_type_active_user_stat (
@@ -27,7 +26,6 @@ sudo -u hdfs hive -e "
         time int,
         package string,
         versioncode int,
-        versionname string,
         brand string,
         model string,
         total int
@@ -37,9 +35,9 @@ sudo -u hdfs hive -e "
     stored as textfile;
     
     insert overwrite table sdk_mobile_type_active_user_stat 
-     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,package,versioncode,versionname,brand,model,total 
+     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,package,versioncode,brand,model,total 
      FROM sdk_mobile_type_active_user_stat_tmp 
-     where total>0 and length(versionname)<100  and day is not null order by total desc;
+     where total>0 and day is not null order by total desc;
     
     drop table sdk_mobile_type_active_user_stat_tmp;
     
@@ -48,7 +46,6 @@ sudo -u hdfs hive -e "
         day string,
         package string,
         versioncode int,
-        versionname string,
         brand string,
         model string,
         total int
@@ -58,9 +55,9 @@ sudo -u hdfs hive -e "
     stored as textfile;
     
     insert overwrite table sdk_mobile_type_new_user_stat_tmp 
-    select from_unixtime(floor(first_time/1000),'yyyy-MM-dd') as day,package,versioncode,versionname,brand,model,count(DISTINCT device_id ) as total 
+    select from_unixtime(floor(first_time/1000),'yyyy-MM-dd') as day,package,versioncode,brand,model,count(DISTINCT device_id ) as total 
     from sdk_game_user_info 
-    group by from_unixtime(floor(first_time/1000),'yyyy-MM-dd'),package,versioncode,versionname,brand,model;
+    group by from_unixtime(floor(first_time/1000),'yyyy-MM-dd'),package,versioncode,brand,model;
     
     drop table sdk_mobile_type_new_user_stat;
     create table if not exists sdk_mobile_type_new_user_stat (
@@ -68,7 +65,6 @@ sudo -u hdfs hive -e "
         time int,
         package string,
         versioncode int,
-        versionname string,
         brand string,
         model string,
         total int
@@ -78,9 +74,9 @@ sudo -u hdfs hive -e "
     stored as textfile;
     
      insert overwrite table sdk_mobile_type_new_user_stat 
-     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time, package,versioncode,versionname,brand,model,total
+     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time, package,versioncode,brand,model,total
      FROM sdk_mobile_type_new_user_stat_tmp 
-     where total>0 and length(versionname)<100 order by total desc;
+     where total>0  order by total desc;
     
     drop table sdk_mobile_type_new_user_stat_tmp; 
 "
@@ -92,7 +88,6 @@ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 		  time int(10) NOT NULL,
 		  package varchar(255) NOT NULL,
 		  versioncode int(10) NOT NULL,
-		  versionname varchar(255) NOT NULL,
 		  brand varchar(255) NOT NULL,
 		  model varchar(255) NOT NULL,
 		  total int(10) NOT NULL,
@@ -107,7 +102,6 @@ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 		  time int(10) NOT NULL,
 		  package varchar(255) NOT NULL,
 		  versioncode int(10) NOT NULL,
-		  versionname varchar(255) NOT NULL,
 		  brand varchar(255) NOT NULL,
 		  model varchar(255) NOT NULL,
 		  total int(10) NOT NULL,
