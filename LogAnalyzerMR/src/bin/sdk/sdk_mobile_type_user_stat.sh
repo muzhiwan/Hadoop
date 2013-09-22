@@ -37,7 +37,7 @@ sudo -u hdfs hive -e "
     insert overwrite table sdk_mobile_type_active_user_stat 
      SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,package,versioncode,brand,model,total 
      FROM sdk_mobile_type_active_user_stat_tmp 
-     where total>0 and day is not null order by total desc;
+     where total>0 and versioncode>0 and day is not null order by total desc;
     
     drop table sdk_mobile_type_active_user_stat_tmp;
     
@@ -82,33 +82,33 @@ sudo -u hdfs hive -e "
 "
 mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
-	DROP TABLE IF EXISTS sdk_mobile_type_active_user_stat;
-	CREATE TABLE sdk_mobile_type_active_user_stat (
-		  day varchar(255) NOT NULL,
-		  time int(10) NOT NULL,
-		  package varchar(255) NOT NULL,
-		  versioncode int(10) NOT NULL,
-		  brand varchar(255) NOT NULL,
-		  model varchar(255) NOT NULL,
-		  total int(10) NOT NULL,
-		  KEY index_time (time),
-		  KEY index_total (total),
-		  KEY index_model (model)
-	);
-	
-	DROP TABLE IF EXISTS sdk_mobile_type_new_user_stat;
-	CREATE TABLE sdk_mobile_type_new_user_stat (
-		  day varchar(255) NOT NULL,
-		  time int(10) NOT NULL,
-		  package varchar(255) NOT NULL,
-		  versioncode int(10) NOT NULL,
-		  brand varchar(255) NOT NULL,
-		  model varchar(255) NOT NULL,
-		  total int(10) NOT NULL,
-		  KEY index_time (time),
-		  KEY index_total (total),
-		  KEY index_model (model)
-	);
+    DROP TABLE IF EXISTS sdk_mobile_type_active_user_stat;
+    CREATE TABLE sdk_mobile_type_active_user_stat (
+          day varchar(255) NOT NULL,
+          time int(10) NOT NULL,
+          package varchar(255) NOT NULL,
+          versioncode int(10) NOT NULL,
+          brand varchar(255) NOT NULL,
+          model varchar(255) NOT NULL,
+          total int(10) NOT NULL,
+          KEY index_time (time),
+          KEY index_total (total),
+          KEY index_model (model)
+    );
+    
+    DROP TABLE IF EXISTS sdk_mobile_type_new_user_stat;
+    CREATE TABLE sdk_mobile_type_new_user_stat (
+          day varchar(255) NOT NULL,
+          time int(10) NOT NULL,
+          package varchar(255) NOT NULL,
+          versioncode int(10) NOT NULL,
+          brand varchar(255) NOT NULL,
+          model varchar(255) NOT NULL,
+          total int(10) NOT NULL,
+          KEY index_time (time),
+          KEY index_total (total),
+          KEY index_model (model)
+    );
 
 EOF
 
