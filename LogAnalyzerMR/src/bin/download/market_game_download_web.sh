@@ -99,6 +99,20 @@ sudo -u hdfs hive -e "
     SELECT a.*, b.total , a.total+b.total FROM market_game_download_web a JOIN market_game_download_click_stat_tmp b ON (a.day = b.day and a.gameId=b.apkid) order by a.day desc;
     
     
+    insert overwrite table market_all_download_stat 
+        select day ,time,gameId ,sum(web_count),sum(client_count),sum(total) from (
+        select day,time gameId ,total as web_count , 0 as client_count from market_game_download_web
+        UNION ALL 
+        select day,unix_timestamp(day,'yyyy-MM-dd') as time,apkid as gameId,0 as web_count,total as client_count  from market_game_download_click_stat_tmp
+        ) tmp where time>0 group by day,time,gameId;
+    
+    
+    
+    
+    
+    
+    
+    drop table market_game_download_click_stat_tmp;
     
  "
  

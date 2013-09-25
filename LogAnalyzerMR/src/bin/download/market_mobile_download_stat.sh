@@ -61,14 +61,17 @@ sudo -u hdfs hive -e "
          day string,
          time int,
          apkid int,
-         total int
+         click int,
+         success int,
+         error int,
+         cancel int
      )
     Row Format Delimited
     Fields Terminated By '\t'
     stored as textfile;
     
     insert overwrite table market_game_download_click_stat 
-     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,total 
+     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,total,0,0,0
      FROM market_game_download_click_stat_tmp 
      where total>0 and apkid<10000000000 and apkid>0
      order by total desc;
@@ -144,14 +147,17 @@ sudo -u hdfs hive -e "
          day string,
          time int,
          apkid int,
-         total int
+         click int,
+         success int,
+         error int,
+         cancel int
      )
     Row Format Delimited
     Fields Terminated By '\t'
     stored as textfile;
     
     insert overwrite table market_game_download_success_stat 
-     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,total 
+     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,0,total,0,0 
      FROM market_game_download_success_stat_tmp 
      where total>0 and apkid<10000000000 and apkid>0
      order by total desc;
@@ -229,14 +235,17 @@ sudo -u hdfs hive -e "
          day string,
          time int,
          apkid int,
-         total int
+         click int,
+         success int,
+         error int,
+         cancel int
      )
     Row Format Delimited
     Fields Terminated By '\t'
     stored as textfile;
     
     insert overwrite table market_game_download_error_stat 
-     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,total 
+     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,0,0,total,0
      FROM market_game_download_error_stat_tmp 
      where total>0 and apkid<10000000000 and apkid>0
      order by total desc;
@@ -310,14 +319,17 @@ sudo -u hdfs hive -e "
          day string,
          time int,
          apkid int,
-         total int
+         click int,
+         success int,
+         error int,
+         cancel int
      )
     Row Format Delimited
     Fields Terminated By '\t'
     stored as textfile;
     
     insert overwrite table market_game_download_cancel_stat 
-     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,total 
+     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,0,0,0,total 
      FROM market_game_download_cancel_stat_tmp 
      where total>0 and apkid<10000000000 and apkid>0
      order by total desc;
@@ -341,7 +353,15 @@ sudo -u hdfs hive -e "
     stored as textfile;
     
     insert overwrite table market_mobile_download_stat 
-    SELECT a.*, b.total,c.total,d.total FROM market_game_download_click_stat a JOIN market_game_download_success_stat b ON (a.day = b.day and a.apkid=b.apkid)  JOIN market_game_download_error_stat c ON (c.day = b.day and c.apkid=b.apkid)  JOIN market_game_download_cancel_stat d ON (c.day = d.day and c.apkid=d.apkid) order by a.day desc;
+        select day ,time,apkid ,sum(click),sum(success),sum(error),sum(cancel) from (
+        select * from market_game_download_click_stat 
+        UNION ALL 
+        select * from market_game_download_success_stat 
+        UNION ALL 
+        select * from market_game_download_error_stat 
+        UNION ALL 
+        select * from market_game_download_cancel_stat 
+        ) tmp where time>0 group by day,time,apkid;
     
     
     
@@ -394,9 +414,9 @@ sudo -u hdfs hive -e "
           cancel int(10) NOT NULL,
           KEY index_apkid (apkid),
           KEY index_click (click),
-	      KEY index_success (success),
-	      KEY index_error (error),
-	      KEY index_cancel (cancel)
+          KEY index_success (success),
+          KEY index_error (error),
+          KEY index_cancel (cancel)
           
     );
 
