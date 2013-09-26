@@ -38,6 +38,10 @@ sudo -u hdfs hive -e "
     fields terminated by '\\001'
     stored as textfile
     location '/apilogs/src/200001/';
+    
+    drop   table market_model_info;
+    create table market_model_info as  select DISTINCT CELL_PHONE_BRAND as brand,CELL_PHONE_MODEL as model,CELL_PHONE_CPU as cpu,CELL_PHONE_DENSITY as density  from sdk200001 ;
+    
   
     drop table market_game_download_click_stat_tmp;
     create table if not exists market_game_download_click_stat_tmp (
@@ -363,20 +367,6 @@ sudo -u hdfs hive -e "
         select * from market_game_download_cancel_stat 
         ) tmp where time>0 group by day,time,apkid;
     
-    
-    
-    drop    table market_download_click_stat;
-    Create Table market_download_click_stat as  select a.day as day ,a.time as time,sum(a.total) as total from market_game_download_click_stat a group by a.day,a.time;
-    
-    drop    table market_download_success_stat;
-    Create Table market_download_success_stat as  select a.day as day ,a.time as time,sum(a.total) as total from market_game_download_success_stat a group by a.day,a.time;
-    
-    drop    table market_download_error_stat;
-    Create Table market_download_error_stat as  select a.day as day ,a.time as time,sum(a.total) as total from market_game_download_error_stat a group by a.day,a.time;
-    
-    drop    table market_download_cancel_stat;
-    Create Table market_download_cancel_stat as  select a.day as day ,a.time as time,sum(a.total) as total from market_game_download_cancel_stat a group by a.day,a.time;
-    
     drop   table market_downlog_mob;
     create table if not exists market_downlog_mob (
          day string,
@@ -391,13 +381,7 @@ sudo -u hdfs hive -e "
     stored as textfile;
     
      insert overwrite table market_downlog_mob 
-    SELECT a.*, b.total,c.total,d.total FROM market_download_click_stat a JOIN market_download_success_stat b ON (a.day = b.day)  JOIN market_download_error_stat c ON (c.day = b.day)  JOIN market_download_cancel_stat d ON (c.day = d.day) order by a.day desc;
-    
-    drop    table market_download_click_stat;
-    drop    table market_download_success_stat;
-    drop    table market_download_error_stat;
-    drop    table market_download_cancel_stat;
-    
+          select a.day as day ,a.time as time,sum(a.click) as click ,sum(a.success) as success ,sum(a.error) as error ,sum(a.cancel) as cancel from market_mobile_download_stat a group by a.day,a.time;    
     
  "
  

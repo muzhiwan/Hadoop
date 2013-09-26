@@ -60,27 +60,6 @@ sudo -u hdfs hive -e "
         where APK_ID<10000000000 and APK_ID>0 and VERSION_CODE<10000000000 and VERSION_CODE>0
         group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,APK_ID;
     
-    drop    table market_download_click_stat ;
-    Create Table market_download_click_stat as  select a.day as day ,sum(a.total) as total from market_game_download_click_stat_tmp a group by a.day;
-    
-    drop   table market_downlog_all;
-    create table if not exists market_downlog_all (
-         day string,
-         time int,
-         web_count int,
-         client_count int,
-         total int
-     )
-    Row Format Delimited
-    Fields Terminated By '\t'
-    stored as textfile;
-    
-    insert overwrite table market_downlog_all 
-    SELECT a.day,a.time,a.total, b.total,a.total+b.total FROM market_downlog_web a JOIN market_download_click_stat b ON (a.day = b.day)   order by a.day desc;
-    
-    drop    table market_download_click_stat ;
-    
-    
     drop table market_all_download_stat;
     create table if not exists market_all_download_stat (
          day string,
@@ -96,21 +75,26 @@ sudo -u hdfs hive -e "
     
     
     insert overwrite table market_all_download_stat 
-    SELECT a.*, b.total , a.total+b.total FROM market_game_download_web a JOIN market_game_download_click_stat_tmp b ON (a.day = b.day and a.gameId=b.apkid) order by a.day desc;
-    
-    
-    insert overwrite table market_all_download_stat 
         select day ,time,gameId ,sum(web_count),sum(client_count),sum(total) from (
-        select day,time gameId ,total as web_count , 0 as client_count from market_game_download_web
+        select day,time ,gameId ,total as web_count , 0 as client_count ,total  from market_game_download_web
         UNION ALL 
-        select day,unix_timestamp(day,'yyyy-MM-dd') as time,apkid as gameId,0 as web_count,total as client_count  from market_game_download_click_stat_tmp
+        select day,unix_timestamp(day,'yyyy-MM-dd') as time,apkid as gameId,0 as web_count,total as client_count,total  from market_game_download_click_stat_tmp
         ) tmp where time>0 group by day,time,gameId;
     
+    drop   table market_downlog_all;
+    create table if not exists market_downlog_all (
+         day string,
+         time int,
+         web_count int,
+         client_count int,
+         total int
+     )
+    Row Format Delimited
+    Fields Terminated By '\t'
+    stored as textfile;
     
-    
-    
-    
-    
+    insert overwrite table market_downlog_all
+        select a.day as day ,a.time as time,sum(a.web_count) as web_count ,sum(a.client_count) as client_count ,sum(a.total) as total  from market_all_download_stat a group by a.day,a.time;    
     
     drop table market_game_download_click_stat_tmp;
     

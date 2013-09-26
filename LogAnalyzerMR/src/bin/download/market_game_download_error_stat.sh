@@ -52,8 +52,8 @@ sudo -u hdfs hive -e "
     create table if not exists market_game_download_error_stat_tmp (
         day string,
         apkid int,
-        package string,
-        versioncode int,
+        session string,
+        errorcode int,
         total int
     )
     Row Format Delimited
@@ -62,10 +62,12 @@ sudo -u hdfs hive -e "
 
     insert overwrite table market_game_download_error_stat_tmp 
         select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
-            APK_ID,PACKAGE_NAME,VERSION_CODE,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
+            APK_ID,OPERATION_TAG,responsecode,count(*) as total 
         from sdk200002
         where VERSION_CODE<10000000000
-        group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,APK_ID,PACKAGE_NAME,VERSION_CODE;
+        group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,APK_ID,OPERATION_TAG,responsecode;
+    
+    
     
     drop table market_game_download_error_stat;
     create table if not exists market_game_download_error_stat (

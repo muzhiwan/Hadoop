@@ -77,7 +77,8 @@ sudo -u hdfs hive -e "
           total int(10) DEFAULT NULL,
           KEY index_total (total),
           KEY index_package (package),
-          KEY index_package_versioncode (package,versioncode)
+          KEY index_package_versioncode (package,versioncode),
+          KEY index_model (model)
     ) ;
 
 EOF
@@ -103,7 +104,8 @@ mysql -h10.1.1.16  -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
         KEY index_total (total),   
         KEY index_package (package),   
         KEY index_package_versioncode (package,versioncode),   
-        KEY index_brand (brand),   KEY index_model (model),   
+        KEY index_brand (brand),
+        KEY index_model (model),   
         KEY index_vid (vid) 
     )DEFAULT CHARSET=utf8 ;
     INSERT INTO sdk_app_stat_copy
