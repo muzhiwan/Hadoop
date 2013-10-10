@@ -47,13 +47,13 @@ sudo -u hdfs hive -e "
     stored as textfile
     location '/apilogs/src/200002/';
   
-    drop table market_game_download_stat_tmp;
-    
+    drop table market_game_download_error_stat_tmp;
     create table if not exists market_game_download_error_stat_tmp (
         day string,
         apkid int,
         session string,
         errorcode int,
+        message string,
         total int
     )
     Row Format Delimited
@@ -61,58 +61,73 @@ sudo -u hdfs hive -e "
     stored as textfile;
 
     insert overwrite table market_game_download_error_stat_tmp 
-        select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
-            APK_ID,OPERATION_TAG,responsecode,count(*) as total 
+        select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,APK_ID,OPERATION_TAG,responsecode,savepath,count(*) as total 
         from sdk200002
-        where VERSION_CODE<10000000000
-        group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,APK_ID,OPERATION_TAG,responsecode;
+        where VERSION_CODE<10000000000 and OPERATION_TAG is not null and responsecode<0 and savepath is not null
+        group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,APK_ID,OPERATION_TAG,responsecode,savepath;
+    
+    drop    table market_download_error_game_tmp;
+    Create Table market_download_error_game_tmp as  select day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,errorcode,message,sum(a.total) as total  from market_game_download_error_stat_tmp a where day is not null  group by day,unix_timestamp(day,'yyyy-MM-dd'),apkid,errorcode,message;
+   
+    drop    table market_download_error_game;
+    Create Table market_download_error_game as  select day,time,apkid,errorcode,message,total  from market_download_error_game_tmp a where total>10 order by day desc, apkid desc,total desc;
+    drop    table market_download_error_game_tmp;
     
     
-    
-    drop table market_game_download_error_stat;
-    create table if not exists market_game_download_error_stat (
-         day string,
-         time int,
-         apkid int,
-         package string,
-         versioncode int,
-         total int
-     )
-    Row Format Delimited
-    Fields Terminated By '\t'
-    stored as textfile;
-    
-    insert overwrite table market_game_download_error_stat 
-     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,apkid,package,versioncode,total 
-     FROM market_game_download_error_stat_tmp 
-     where total>0 and apkid<10000000000
-     order by total desc;
-    
-    drop table market_game_download_error_stat_tmp;
-    
+    drop    table market_download_error_code;
+    Create Table market_download_error_code as  select day,unix_timestamp(day,'yyyy-MM-dd')  as time,errorcode,sum(a.total) as total  from market_game_download_error_stat_tmp a where day is not null group by day,unix_timestamp(day,'yyyy-MM-dd'),errorcode;
+   
+    drop    table market_download_error_message;
+    Create Table market_download_error_message as  select day,unix_timestamp(day,'yyyy-MM-dd')  as time,errorcode,message,sum(a.total) as total  from market_game_download_error_stat_tmp a  where day is not null and length(message)<255 group by day,unix_timestamp(day,'yyyy-MM-dd'),errorcode,message;
+
  "
  
  mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
-    DROP TABLE IF EXISTS market_game_download_error_stat;
-    CREATE TABLE market_game_download_error_stat (
+    DROP TABLE IF EXISTS market_download_error_game;
+    CREATE TABLE market_download_error_game (
           day varchar(255) NOT NULL,
           time int(10) NOT NULL,
           apkid int(10) NOT NULL,
-          package varchar(255) NOT NULL,
-          versioncode int(10) NOT NULL,
+          errorcode int(10) NOT NULL,
+          message varchar(255) NOT NULL,
           total int(10) NOT NULL,
+          KEY index_errorcode (errorcode),
+          KEY index_time (time),
           KEY index_apkid (apkid),
-          KEY index_package (package),
-          KEY index_total (total),
-          KEY index_package_versioncode (package,versioncode)
+          KEY index_total (total)
+    )DEFAULT CHARSET=utf8 ;
+    DROP TABLE IF EXISTS market_download_error_code;
+    CREATE TABLE market_download_error_code (
+          day varchar(255) NOT NULL,
+          time int(10) NOT NULL,
+          errorcode int(10) NOT NULL,
+          total int(10) NOT NULL,
+          KEY index_errorcode (errorcode),
+          KEY index_time (time),
+          KEY index_total (total)
     );
+    DROP TABLE IF EXISTS market_download_error_message;
+    CREATE TABLE market_download_error_message (
+          day varchar(255) NOT NULL,
+          time int(10) NOT NULL,
+          errorcode int(10) NOT NULL,
+          message varchar(255) NOT NULL,
+          total int(10) NOT NULL,
+          KEY index_errorcode (errorcode),
+          KEY index_time (time),
+          KEY index_total (total)
+    )DEFAULT CHARSET=utf8 ;
 
 EOF
     
- sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table market_game_download_error_stat --export-dir /user/hive/warehouse/market_game_download_error_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+ sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table market_download_error_game --export-dir /user/hive/warehouse/market_download_error_game --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+ sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table market_download_error_code --export-dir /user/hive/warehouse/market_download_error_code --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+ sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table market_download_error_message --export-dir /user/hive/warehouse/market_download_error_message --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
 
-mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  market_game_download_error_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  market_download_error_game  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  market_download_error_code  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  market_download_error_message  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 
  
  

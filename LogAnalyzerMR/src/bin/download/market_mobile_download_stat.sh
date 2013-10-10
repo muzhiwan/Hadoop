@@ -40,7 +40,7 @@ sudo -u hdfs hive -e "
     location '/apilogs/src/200001/';
     
     drop   table market_model_info;
-    create table market_model_info as  select DISTINCT CELL_PHONE_BRAND as brand,CELL_PHONE_MODEL as model,CELL_PHONE_CPU as cpu,CELL_PHONE_DENSITY as density  from sdk200001 ;
+    create table market_model_info as  select DISTINCT CELL_PHONE_BRAND as brand,CELL_PHONE_MODEL as model,CELL_PHONE_CPU as cpu,CELL_PHONE_DENSITY as density  from sdk200001 where CELL_PHONE_BRAND is not null ;
     
   
     drop table market_game_download_click_stat_tmp;
@@ -342,8 +342,8 @@ sudo -u hdfs hive -e "
     
     
     
-    drop table market_mobile_download_stat;
-    create table if not exists market_mobile_download_stat (
+    drop table market_mobile_download_stat_tmp;
+    create table if not exists market_mobile_download_stat_tmp (
          day string,
          time int,
          apkid int,
@@ -356,7 +356,7 @@ sudo -u hdfs hive -e "
     Fields Terminated By '\t'
     stored as textfile;
     
-    insert overwrite table market_mobile_download_stat 
+    insert overwrite table market_mobile_download_stat_tmp 
         select day ,time,apkid ,sum(click),sum(success),sum(error),sum(cancel) from (
         select * from market_game_download_click_stat 
         UNION ALL 
@@ -367,60 +367,28 @@ sudo -u hdfs hive -e "
         select * from market_game_download_cancel_stat 
         ) tmp where time>0 group by day,time,apkid;
     
-    drop   table market_downlog_mob;
-    create table if not exists market_downlog_mob (
-         day string,
-         time int,
-         click int,
-         success int,
-         error int,
-         cancel int
-     )
-    Row Format Delimited
-    Fields Terminated By '\t'
-    stored as textfile;
-    
-     insert overwrite table market_downlog_mob 
-          select a.day as day ,a.time as time,sum(a.click) as click ,sum(a.success) as success ,sum(a.error) as error ,sum(a.cancel) as cancel from market_mobile_download_stat a group by a.day,a.time;    
-    
  "
  
- mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
-
-    DROP TABLE IF EXISTS market_mobile_download_stat;
-    CREATE TABLE market_mobile_download_stat (
-          day varchar(255) NOT NULL,
-          time int(10) NOT NULL,
-          apkid int(10) NOT NULL,
-          click int(10) NOT NULL,
-          success int(10) NOT NULL,
-          error int(10) NOT NULL,
-          cancel int(10) NOT NULL,
-          KEY index_apkid (apkid),
-          KEY index_click (click),
-          KEY index_success (success),
-          KEY index_error (error),
-          KEY index_cancel (cancel)
-          
-    );
-
-    DROP TABLE IF EXISTS market_downlog_mob;
-    CREATE TABLE market_downlog_mob (
-         day varchar(255) NOT NULL,
-         time int(10) NOT NULL,
-         click int(10) NOT NULL,
-         success int(10) NOT NULL,
-         error int(10) NOT NULL,
-         cancel int(10) NOT NULL
-    );
+ 
+mysql -h10.1.1.2 -uapplanet_user -papplanet_user2111579711B\(\)\^ -D mzw <<EOF
+    DROP TABLE IF EXISTS market_model_info;
+    CREATE TABLE market_model_info (
+          brand varchar(255) NOT NULL,
+          model varchar(255) NOT NULL,
+          cpu varchar(255) NOT NULL,
+          density varchar(255) NOT NULL,
+          KEY index_brand (brand),
+          KEY index_model (model),
+          KEY index_cpu (cpu),
+          KEY index_density (density)
+    )DEFAULT CHARSET=utf8 ;
     
 EOF
+ 
+ 
+ sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.2:3306/mzw --username applanet_user --password applanet_user2111579711B\(\)\^ --table market_model_info --export-dir /user/hive/warehouse/market_model_info --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
 
- sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table market_mobile_download_stat --export-dir /user/hive/warehouse/market_mobile_download_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
- sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table market_downlog_mob --export-dir /user/hive/warehouse/market_downlog_mob --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
-
-mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  market_mobile_download_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
-mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  market_downlog_mob  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+mysql -h10.1.1.2 -uapplanet_user -papplanet_user2111579711B\(\)\^ -D mzw -e "ALTER TABLE  market_model_info  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 
  
  
