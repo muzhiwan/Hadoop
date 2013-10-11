@@ -54,12 +54,9 @@ sudo -u hdfs hive -e "
     stored as textfile;
 
     insert overwrite table market_game_download_click_stat_tmp 
-        select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
-            APK_ID,count(*) as total 
-        from sdk200001 
-        where APK_ID<10000000000 and APK_ID>0 and VERSION_CODE<10000000000 and VERSION_CODE>0
-        group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,APK_ID;
-    
+        select day,apkid,click as total 
+        from market_mobile_download_stat;
+        
     drop table market_all_download_stat;
     create table if not exists market_all_download_stat (
          day string,
