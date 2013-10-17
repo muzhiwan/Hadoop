@@ -8,7 +8,7 @@ sudo -u hdfs hadoop fs -mkdir "${destDir}"
 starttime=`date +"%s"`
 outputPath="${destDir}/${starttime}"
 
-sudo -u hdfs hadoop jar /home/hdfs/LogAnalyzerMR.jar com.muzhiwan.hadoop.LogAnalyzerMR MobileGAMEUserInfo "${srcDir}" "${outputPath}"
+sudo -u hdfs hadoop jar /home/hdfs/shell/LogAnalyzerMR.jar com.muzhiwan.hadoop.LogAnalyzerMR MobileGAMEUserInfo "${srcDir}" "${outputPath}"
 
 sudo -u hdfs hive -e "
     drop table sdk_game_user_info;

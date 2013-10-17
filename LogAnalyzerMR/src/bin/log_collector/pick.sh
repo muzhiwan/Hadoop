@@ -6,6 +6,6 @@ day=`date -d yesterday +"%d"`
 
 #for event in "${events[@]}"; do
 for event in $(ls -l /tjlogs | awk '{print $9}'); do
-       /home/hdfs/log_pick/log_collector.sh "${event}" "${month}" "${day}"
+       /home/hdfs/shell/log_collector.sh "${event}" "${month}" "${day}"
 done
 

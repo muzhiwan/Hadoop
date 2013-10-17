@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-destDir="/home/hdfs/log_pick/"
+destDir="/home/hdfs/shell/"
 
 log="${destDir}collector.log"
 
