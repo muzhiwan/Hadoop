@@ -51,7 +51,7 @@ public class Utility {
 	}
 	
 	public static long getValidTime(long clientTime, long serverTime) {
-		if (serverTime > clientTime+10*24*60*60*1000 || serverTime < clientTime) {
+		if (serverTime > clientTime+10*24*60*60 || serverTime < clientTime) {
 			return serverTime;
 		}else {
 			return clientTime;

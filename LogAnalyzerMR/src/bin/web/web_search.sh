@@ -1,7 +1,8 @@
 #!/bin/bash
 
 sudo -u hdfs hive -e "
-    create EXTERNAL table if not exists web803 (
+    drop table web_search;
+    create EXTERNAL table if not exists web_search (
         SERVER_TIME bigint,
         CLIENT_IP string,
         CLIENT_AREA string,
@@ -14,63 +15,44 @@ sudo -u hdfs hive -e "
     row format delimited
     fields terminated by '\\001'
     stored as textfile
-    location '/apilogs/src/803/';
+    location '/apilogs/src/804/';
   
-    drop table web_search_day_stat;
-    create table if not exists web_search_day_stat (
-        day string,
-        time int,
-        searchKey string,
-        total int
-    )
-    Row Format Delimited
-    Fields Terminated By '\\001'
-    stored as textfile;
-    
-     insert overwrite table web_search_day_stat 
-        select from_unixtime(SERVER_TIME,'yyyy-MM-dd'),unix_timestamp(from_unixtime(SERVER_TIME,'yyyy-MM-dd'),'yyyy-MM-dd'),searchKey,count(*)
-        from web803
-        where searchKey is not null and length(searchKey)<100 and length(searchKey)>0
+    drop table web_search_day_stat_tmp;
+      Create Table  web_search_day_stat_tmp as 
+        select from_unixtime(SERVER_TIME,'yyyy-MM-dd') as day,unix_timestamp(from_unixtime(SERVER_TIME,'yyyy-MM-dd'),'yyyy-MM-dd') as time,searchKey,count(*) as total
+        from web_search
+        where searchKey is not null and length(searchKey)<100 and length(searchKey)>0 
         group by from_unixtime(SERVER_TIME,'yyyy-MM-dd'),unix_timestamp(from_unixtime(SERVER_TIME,'yyyy-MM-dd'),'yyyy-MM-dd') ,searchKey;
     
     drop table web_log_search;
-    Create Table web_log_search as  select a.day as day ,a.time as time,sum(a.total) as total from web_search_day_stat a where a.time>0 group by a.day,a.time;
+    Create Table web_log_search as  select a.day as day ,a.time as time,sum(a.total) as total from web_search_day_stat_tmp a where a.time>0 and a.time<10000000000 group by a.day,a.time;
     
+    drop table web_search_day_stat;
+    Create Table web_search_day_stat as  select * from web_search_day_stat_tmp a where a.time>0 and total>5;
     
-    drop table web_search_week_stat;
-    create table if not exists web_search_week_stat (
-        year int,
-        week int,
-        searchKey string,
-        total int
-    )
-    Row Format Delimited
-    Fields Terminated By '\\001'
-    stored as textfile;
 
-    insert overwrite table web_search_week_stat
-        select from_unixtime(SERVER_TIME,'yyyy'),weekofyear(from_unixtime(SERVER_TIME,'yyyy-MM-dd')),searchKey,count(*)
-        from web803
+    drop table web_search_week_stat_tmp;
+    create table web_search_week_stat_tmp as 
+        select from_unixtime(SERVER_TIME,'yyyy') as year,weekofyear(from_unixtime(SERVER_TIME,'yyyy-MM-dd')) as week,searchKey,count(*) as total
+        from web_search
         where searchKey is not null and length(searchKey)<100 and length(searchKey)>0
         group by from_unixtime(SERVER_TIME,'yyyy'),weekofyear(from_unixtime(SERVER_TIME,'yyyy-MM-dd')),searchKey;
-
-    drop table web_search_month_stat;
-    create table if not exists web_search_month_stat (
-        year int,
-        month int,
-        searchKey string,
-        total int
-    )
-    Row Format Delimited
-    Fields Terminated By '\\001'
-    stored as textfile;
-
-    insert overwrite table web_search_month_stat
-        select from_unixtime(SERVER_TIME,'yyyy'),month(from_unixtime(SERVER_TIME,'yyyy-MM-dd')),searchKey,count(*)
-        from web803
+    
+    drop table web_search_week_stat;
+    Create Table web_search_week_stat as  select * from web_search_week_stat_tmp a where total>5;
+    drop table web_search_week_stat_tmp;
+    
+    drop table web_search_month_stat_tmp;
+    create table web_search_month_stat_tmp as
+        select from_unixtime(SERVER_TIME,'yyyy') as year,month(from_unixtime(SERVER_TIME,'yyyy-MM-dd')) as month,searchKey,count(*) as total
+        from web_search
         where searchKey is not null and length(searchKey)<100 and length(searchKey)>0
         group by from_unixtime(SERVER_TIME,'yyyy'),month(from_unixtime(SERVER_TIME,'yyyy-MM-dd')),searchKey;
-
+    
+    drop table web_search_month_stat;
+    Create Table web_search_month_stat as  select * from web_search_month_stat_tmp a where total>5;
+    drop table web_search_month_stat_tmp;
+    
  "
  
  
@@ -80,7 +62,7 @@ sudo -u hdfs hive -e "
     CREATE TABLE web_search_day_stat (
           day varchar(255) NOT NULL,
           time int(10) NOT NULL,
-          searchKey varchar(255) NOT NULL,
+          searchKey varchar(255),
           total int(10) NOT NULL,
           KEY index_searchKey (searchKey),
           KEY index_time (time),
@@ -99,7 +81,7 @@ sudo -u hdfs hive -e "
     CREATE TABLE web_search_week_stat (
           year int(10) NOT NULL,
           week int(10) NOT NULL,
-          searchKey varchar(255) NOT NULL,
+          searchKey varchar(255),
           total int(10) NOT NULL,
           KEY index_searchKey (searchKey),
           KEY index_year (year),
@@ -111,7 +93,7 @@ sudo -u hdfs hive -e "
     CREATE TABLE web_search_month_stat (
           year int(10) NOT NULL,
           month int(10) NOT NULL,
-          searchKey varchar(255) NOT NULL,
+          searchKey varchar(255),
           total int(10) NOT NULL,
           KEY index_searchKey (searchKey),
           KEY index_year (year),

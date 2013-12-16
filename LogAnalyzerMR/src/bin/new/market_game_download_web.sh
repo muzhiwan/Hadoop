@@ -35,7 +35,7 @@ sudo -u hdfs hive -e "
     insert overwrite table market_game_download_web 
         select from_unixtime(SERVER_TIME,'yyyy-MM-dd'),unix_timestamp(from_unixtime(SERVER_TIME,'yyyy-MM-dd'),'yyyy-MM-dd'),gameId,count(*)
         from web814 
-        where gameId>0
+        where gameId>0 and SERVER_TIME>0
         group by from_unixtime(SERVER_TIME,'yyyy-MM-dd'),unix_timestamp(from_unixtime(SERVER_TIME,'yyyy-MM-dd'),'yyyy-MM-dd') ,gameId;
         
     

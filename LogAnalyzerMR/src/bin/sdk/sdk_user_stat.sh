@@ -47,14 +47,15 @@ sudo -u hdfs  hive -e "
     create table if not exists sdk_new_user_stat (
         day string,
         time bigint,
-        total bigint
+        new_user_count bigint,
+        active_user_count bigint
     )
     Row Format Delimited
     Fields Terminated By '\t'
     stored as textfile;
     
      insert overwrite table sdk_new_user_stat 
-     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,total 
+     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,total,0
      FROM sdk_new_user_stat_tmp 
      where total>0 order by total desc;
     
@@ -111,16 +112,27 @@ sudo -u hdfs  hive -e "
     create table if not exists sdk_active_user_stat (
         day string,
         time bigint,
-        total bigint
+        new_user_count bigint,
+        active_user_count bigint
     )
     Row Format Delimited
     Fields Terminated By '\t'
     stored as textfile;
     
      insert overwrite table sdk_active_user_stat 
-     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,total FROM sdk_active_user_stat_tmp where total>0 order by total desc;
+     SELECT day,unix_timestamp(day,'yyyy-MM-dd')  as time,0,total FROM sdk_active_user_stat_tmp where total>0 order by total desc;
     
     drop   table sdk_active_user_stat_tmp;
+    
+    create  table sdk_user_stat as
+        select day ,time,sum(tmp.new_user_count) as new_user_count ,sum(tmp.active_user_count) as active_user_count from (
+        select * from sdk_new_user_stat 
+        UNION ALL 
+        select * from sdk_active_user_stat  
+        ) tmp where time>0 group by day,time order by day desc;
+    
+    drop table sdk_new_user_stat;
+    drop table sdk_active_user_stat;
     
 "
 
@@ -139,31 +151,22 @@ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
           screen_height int(10) NOT NULL
     );
     
-    DROP TABLE IF EXISTS sdk_new_user_stat;
-    CREATE TABLE sdk_new_user_stat (
+    DROP TABLE IF EXISTS sdk_user_stat;
+    CREATE TABLE sdk_user_stat (
           day varchar(255) NOT NULL,
           time int(10) NOT NULL,
-          total int(10) NOT NULL,
+          new_user_count int(10) NOT NULL,
+          active_user_count int(10) NOT NULL,
           KEY index_time (time)
     );
     
-    DROP TABLE IF EXISTS sdk_active_user_stat;
-    CREATE TABLE sdk_active_user_stat (
-          day varchar(255) NOT NULL,
-          time int(10) NOT NULL,
-          total int(10) NOT NULL,
-          KEY index_time (time)
-    ) ;
-
 EOF
 
 #sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_user_info --export-dir /user/hive/warehouse/sdk_user_info --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
-sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_new_user_stat --export-dir /user/hive/warehouse/sdk_new_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
-sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_active_user_stat --export-dir /user/hive/warehouse/sdk_active_user_stat --input-fields-terminated-by '\t' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_user_stat --export-dir /user/hive/warehouse/sdk_user_stat --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
 
 #mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_user_info  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
-mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_new_user_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
-mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_active_user_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_user_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 
 
 

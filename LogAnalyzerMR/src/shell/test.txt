@@ -1,0 +1,68 @@
+mysql -h10.1.1.2 -uapplanet_user -papplanet_user2111579711B\(\)\^ -D mzw
+
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk
+
+
+mysqldump –h 10.1.1.16 –u statsdkuser –p statsdkuser2111579711 -D stat_sdk sdk_active_user_stat > backupfile.sql 
+
+
+mysqldump –h hostname –u username –p password databasename specific_table1 specific_table2 > backupfile.sql 
+
+
+mysqldump –h hostname –u username –p password databasename specific_table1 specific_table2 > backupfile.sql 
+
+
+
+
+
+
+ sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table mzw_game_v --export-dir /user/hive/warehouse/mzw_game_v --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+
+
+ sudo -u hdfs sqoop import  --connect jdbc:mysql://10.1.1.2:3306/mzw --username applanet_user --password applanet_user2111579711B\(\)\^ --table mzw_game_v --hive-import
+
+
+SELECT group_concat(package_name)  from download_record group by package_name;
+
+
+SELECT NAME,GROUP_CONCAT( total ORDER BY  total SEPARATOR ", ") AS name_str FROM test GROUP BY name
+																					SEPARATOR 
+select deviceid,GROUP_CONCAT( package_name , ',')  from download_record group by deviceid;
+
+select concat( package_name SEPARATOR ',')  from download_record group by deviceid;
+
+SELECT deviceid,concat_ws('|', collect_set(package_name)) FROM download_record GROUP BY deviceid;
+
+mahout fpg -i output.dat -o patterns -k 10 -method mapreduce -regex '[\ ]' -s 10
+
+　　指令的含义在mahout的网站上有详细说明，简要说下，-i表示输入，-o表示输出，-k 10表示找出和某个item相关的前十个频繁项，-method mapreduce表示使用mapreduce来运行这个作业，-regex '[\ ]'表示每个transaction里用空白来间隔item的，-s 10表示只统计最少出现10次的项。
+
+　　成功运行后在patterns文件夹里会出现四个文件或者文件夹
+
+fList: 记录了每个item出现的次数的序列文件
+frequentpatterns: 记录了包含每个item的频繁项的序列文件
+fpGrowth
+parallelcounting
+　　当然这些结果是在hdfs上面的，可以使用mahout命令查看下这些输出，在终端输入  mahout seqdumper -i patterns/frequentpatterns/part-r-00000
+
+sudo -u hdfs mahout fpg -i /user/hdfs/mahout/src -o /user/hdfs/mahout/out  -method mapreduce -regex '[\|]'  -s 2
+
+sudo -u hdfs mahout seqdumper -i /user/hdfs/mahout/out/frequentpatterns/part-r-00000 >ret.txt
+
+([com.dreamstudio.epicdefense],1456), ([com.ironhidegames.android.kingdomrush, com.dreamstudio.epicdefense],374), ([com.InterServ.ApocalypseKnights, com.dreamstudio.epicdefense],312)
+Key: com.driftwood.galaxybowl: Value: ([com.driftwood.galaxybowl],21)
+
+
+
+
+
+Key: au.com.tinmangames.gamebook2android: Value: ([au.com.tinmangames.gamebook2android],7), ([com.namcobandaigames.dragonballtap.apk, au.com.tinmangames.gamebook2android],3), ([com.gameloft.android.ANMP.GloftKRHM, au.com.tinmangames.game
+book2android],3), ([com.ea.deadspace, au.com.tinmangames.gamebook2android],3), ([com.gameloft.android.ANMP.GloftA8HM, com.ea.games.r3_row, com.namcobandaigames.dragonballtap.apk, jp.co.capcom.android.bio4_LGUplus0119, com.gameloft.androi
+d.ANMP.GloftKRHM, au.com.tinmangames.gamebook2android],2), ([com.ea.deadspace, com.fde.avpevolution, au.com.tinmangames.gamebook2android],2), ([com.InterServ.ApocalypseKnights, com.gameloft.android.ANMP.GloftKRHM, au.com.tinmangames.game
+book2android],2), ([com.playstation.allstars.island, au.com.tinmangames.gamebook2android],2), ([com.kiloo.subwaysurf, au.com.tinmangames.gamebook2android],2), ([com.gamevil.doz.global, au.com.tinmangames.gamebook2android],2)
+
+
+
+
+
+

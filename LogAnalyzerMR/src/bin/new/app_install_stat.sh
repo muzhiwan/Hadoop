@@ -64,41 +64,27 @@ sudo -u hdfs hive -e "
     
     
       
-    drop   table market_model_info1;
-    create table market_model_info1 as  
-        select CELL_PHONE_BRAND as brand,CELL_PHONE_MODEL as model,CELL_PHONE_CPU as cpu,CELL_PHONE_DENSITY as density ,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
-        from sdk200007 
-        where CELL_PHONE_BRAND is not null  and CELL_PHONE_MODEL is not null
-        group by CELL_PHONE_BRAND,CELL_PHONE_MODEL,CELL_PHONE_CPU,CELL_PHONE_DENSITY;
     
     drop   table market_model_info2;
     create table market_model_info2 as  
         select CELL_PHONE_BRAND as brand,CELL_PHONE_MODEL as model,CELL_PHONE_CPU as cpu,CELL_PHONE_DENSITY as density ,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
         from MARKET200002 
-        where CELL_PHONE_BRAND is not null  and EVENT_ID='100003'
+        where CELL_PHONE_BRAND is not null  and EVENT_ID='100003'  and CELL_PHONE_DENSITY is not null
         group by CELL_PHONE_BRAND,CELL_PHONE_MODEL,CELL_PHONE_CPU,CELL_PHONE_DENSITY;
     
     
     drop   table market_model_info;
     create table market_model_info as  
         select brand,model,cpu,density, sum(tmp.total) as total from (
-            select * from market_model_info1
+            select * from market_model_info_history
             UNION ALL 
             select * from market_model_info2 
         
-        ) tmp where model is not null and cpu is not null  group by brand,model,cpu,density;
+        ) tmp where model is not null and cpu is not null  and density is not null group by brand,model,cpu,density;
         
-        drop   table market_model_info1;
         drop   table market_model_info2;
     
     
-    drop   table sdk_app_stat_tmp1;
-    create  table sdk_app_stat_tmp1 as
-        select CELL_PHONE_BRAND as brand,CELL_PHONE_MODEL as model,PACKAGE_NAME as package,VERSION_CODE as versioncode,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
-        from sdk200007
-        where VERSION_CODE<10000000000
-        group by CELL_PHONE_BRAND,CELL_PHONE_MODEL,PACKAGE_NAME,VERSION_CODE;
-        
      drop   table sdk_app_stat_tmp2;
      create  table sdk_app_stat_tmp2  as
         select CELL_PHONE_BRAND as brand,CELL_PHONE_MODEL as model,PACKAGE_NAME as package,VERSION_CODE as versioncode,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
@@ -109,7 +95,7 @@ sudo -u hdfs hive -e "
     drop   table sdk_app_stat_tmp;
     create  table sdk_app_stat_tmp as 
         select brand,model,package,versioncode, sum(tmp.total) as total from (
-            select * from sdk_app_stat_tmp1
+            select * from sdk_app_stat_history
             UNION ALL 
             select * from sdk_app_stat_tmp2 
         
@@ -119,6 +105,9 @@ sudo -u hdfs hive -e "
     create table sdk_app_stat as
      select brand,model,package,versioncode, total   FROM sdk_app_stat_tmp 
      where total>5 order by total desc;
+    
+    drop   table sdk_app_stat_tmp;
+    drop   table sdk_app_stat_tmp2;
     
     
  "
@@ -168,26 +157,33 @@ sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --user
 mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_app_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 
 mysql -h10.1.1.16  -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
-
+    
     DROP TABLE IF EXISTS sdk_app_stat_copy;
-    CREATE TABLE sdk_app_stat_copy (   
-        id int(10) NOT NULL AUTO_INCREMENT,   
-        brand varchar(255) NOT NULL,   
-        model varchar(255) NOT NULL,   
-        package varchar(255) NOT NULL,   
-        versioncode int(10) NOT NULL,   
-        total int(10) NOT NULL,   
-        vid int(10) NOT NULL,   
-        vtitle char(50) NOT NULL,   
-        version char(20) NOT NULL,   
-        PRIMARY KEY (id),   
-        KEY index_total (total),   
-        KEY index_package (package),   
-        KEY index_package_versioncode (package,versioncode),   
-        KEY index_brand (brand),
-        KEY index_model (model),   
-        KEY index_vid (vid) 
-    )DEFAULT CHARSET=utf8 ;
+    CREATE TABLE sdk_app_stat_copy (
+       id int(10) NOT NULL AUTO_INCREMENT,
+       brand varchar(255) NOT NULL,
+       model varchar(255) NOT NULL,
+       package varchar(255) NOT NULL,
+       versioncode int(10) NOT NULL,
+       total int(10) NOT NULL,
+       vid int(10) NOT NULL,
+       vtitle char(50) NOT NULL,
+       version char(20) NOT NULL,
+       tid int(10) DEFAULT NULL,
+       prop int(10) DEFAULT NULL,
+       form int(10) DEFAULT NULL,
+       PRIMARY KEY (id),
+       KEY index_total (total),
+       KEY index_package (package),
+       KEY index_package_versioncode (package,versioncode),
+       KEY index_brand (brand),
+       KEY index_model (model),
+       KEY index_vid (vid),
+       KEY index_prop (prop),
+       KEY index_tid (tid)
+     ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+    
+    
     INSERT INTO sdk_app_stat_copy
         (
         brand, 
@@ -197,7 +193,10 @@ mysql -h10.1.1.16  -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
         total, 
         vid, 
         vtitle,
-        version
+        version,
+        tid,
+        prop,
+        form
         )
     SELECT  
         s.brand, 
@@ -207,11 +206,16 @@ mysql -h10.1.1.16  -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
         s.total,
         v.vid,
         v.vtitle,
-        v.version
+        v.version,
+        v.tid,
+        v.prop,
+        v.form
     FROM (mzw_game_v v, sdk_app_stat s)
     WHERE  
         s.package=v.package AND 
-        s.versioncode = v.versioncode ;
+        v.tid!=27 AND
+        s.versioncode = v.versioncode ; 
+
     
 EOF
 
