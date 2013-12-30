@@ -251,6 +251,56 @@ sudo -u hdfs  hive -e "
     
     
     
+    drop table SDK_200001;
+    create EXTERNAL table if not exists SDK_102000 (
+        server_time bigint,
+        client_ip string,
+        client_area string,
+        number string,
+        CLIENT_TIME bigint,
+        eventTag string,
+        brand string,
+        model string,
+        cpu string,
+        density bigint,
+        width bigint,
+        height bigint,
+        network string,
+        systemversion string,
+        softwareversion string,
+        firmwire string,
+        deviceid string,
+        appkey string,
+        title string,
+        packagename string,
+        versioncode bigint,
+        versionname string,
+        uid string,
+        eventid string,
+        session string,
+        productname string,
+        productdesc string,
+        money bigint,
+        orderid string,
+        paytype bigint,
+        errorcode bigint,
+        channel string
+    )
+    row format delimited
+    fields terminated by '\001'
+    stored as textfile
+    location '/apilogs/src/SDK102000/';
+  
+  
+    drop    table sdk_online_pay_stat ;
+    create  table sdk_online_pay_stat as
+        select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
+            appkey,paytype,count(*) as total 
+        from SDK_102000 
+        where eventid='102002' and appkey is not null and length(appkey)>2
+        group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,appkey,paytype;
+    
+    
     
 "
 
@@ -294,16 +344,28 @@ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
           KEY index_time (time)
     )DEFAULT CHARSET=utf8 ;
     
+    DROP TABLE IF EXISTS sdk_online_pay_stat;
+    CREATE TABLE sdk_online_pay_stat (
+          day varchar(255) NOT NULL,
+          appkey varchar(255) NOT NULL,
+          paytype int(10) NOT NULL,
+          total int(10) NOT NULL,
+          KEY index_appkey (appkey),
+          KEY index_day (day)
+    )DEFAULT CHARSET=utf8 ;
+    
 EOF
 
  sudo -u hdfs  sqoop export --connect  "jdbc:mysql://10.1.1.16:3306/stat_sdk?useUnicode=true&characterEncoding=utf-8" --username statsdkuser --password statsdkuser2111579711 --table sdk_online_game_user_stat --export-dir /user/hive/warehouse/sdk_online_game_user_stat --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
  sudo -u hdfs  sqoop export --connect  "jdbc:mysql://10.1.1.16:3306/stat_sdk?useUnicode=true&characterEncoding=utf-8" --username statsdkuser --password statsdkuser2111579711 --table sdk_online_game_new_user --export-dir /user/hive/warehouse/sdk_online_game_new_user --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
  sudo -u hdfs  sqoop export --connect  "jdbc:mysql://10.1.1.16:3306/stat_sdk?useUnicode=true&characterEncoding=utf-8" --username statsdkuser --password statsdkuser2111579711 --table sdk_online_game_active_user --export-dir /user/hive/warehouse/sdk_online_game_active_user --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
+ sudo -u hdfs  sqoop export --connect  "jdbc:mysql://10.1.1.16:3306/stat_sdk?useUnicode=true&characterEncoding=utf-8" --username statsdkuser --password statsdkuser2111579711 --table sdk_online_pay_stat --export-dir /user/hive/warehouse/sdk_online_pay_stat --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
 
 
 mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_online_game_user_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_online_game_new_user  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_online_game_active_user  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_online_pay_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
 
 
 
