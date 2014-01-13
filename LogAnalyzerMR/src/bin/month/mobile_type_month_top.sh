@@ -28,7 +28,7 @@ sudo -u hdfs hive -e "
         select * from mobile_type_month_top_old 
         UNION ALL 
         select * from mobile_type_month_top_1 
-        ) tmp group by month,brand,model,system_version order by month,total desc;
+        ) tmp where month is not null group by month,brand,model,system_version order by month,total desc;
     
     
         

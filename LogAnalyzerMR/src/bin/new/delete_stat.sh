@@ -12,7 +12,21 @@ sudo -u hdfs hive -e "
         from MARKET200001 
         where EVENT_CLASS_ID='MARKET200001' and UID!='-1' and EVENT_ID='100003';
     
+    
+    
+    drop    table user_fps;
+    create  table user_fps as
+        select package_name as package,count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
+        from StandSDK100008 
+        where package_name is not null and length(package_name)>10 and fps REGEXP  '^\\d+$'  and CLIENT_TIME REGEXP  '^\\d+$' 
+        group by PACKAGE_NAME;
   
+        
+        select count(DISTINCT CELL_PHONE_DEVICE_ID) as total 
+        from StandSDK100008 
+        where package_name is not null and length(package_name)>10 and fps REGEXP  '^\\d+$'  and CLIENT_TIME REGEXP  '^\\d+$' ;
+  
+        
         
  "
  

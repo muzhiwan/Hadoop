@@ -1,10 +1,12 @@
 #!/bin/bash
 
 events=(SDK200003 SDK200001 SDK200002)
+
+year=`date -d now +"%Y"`
 month=`date -d now +"%m"`
 day=`date -d now  +"%d"`
 for event in "${events[@]}"; do
-    /home/hdfs/shell/log_collector.sh "${event}" "${month}" "${day}"
+    /home/hdfs/shell/log_collector.sh "${event}" "${year}" "${month}" "${day}"
 done
 
 srcDir="/apilogs/src/SDK200003"
@@ -148,7 +150,7 @@ sudo -u hdfs  hive -e "
     insert overwrite table sdk_online_game_user_stat_tmp3 
     select from_unixtime(server_time,'yyyy-MM-dd'),unix_timestamp(from_unixtime(server_time,'yyyy-MM-dd'),'yyyy-MM-dd'),appkey,0,0,count(DISTINCT username),0
     from SDK_200001 
-    where type=1 and eventid='002'
+    where (type=1 or type=2) and eventid='002'
     group by from_unixtime(server_time,'yyyy-MM-dd'),unix_timestamp(from_unixtime(server_time,'yyyy-MM-dd'),'yyyy-MM-dd'),appkey;
 
     

@@ -6,9 +6,9 @@ destDir="/home/hdfs/shell/"
 log="${destDir}collector.log"
 
 eventId="$1"
-year=`date +"%Y"`
-month="$2"
-day="$3"
+year="$2"
+month="$3"
+day="$4"
 
 rootDir="/tjlogs/${eventId}/"
 hdfsDir="/apilogs/src/${eventId}"

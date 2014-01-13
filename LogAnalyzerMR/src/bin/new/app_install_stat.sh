@@ -160,18 +160,19 @@ mysql -h10.1.1.16  -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
     
     DROP TABLE IF EXISTS sdk_app_stat_copy;
     CREATE TABLE sdk_app_stat_copy (
-       id int(10) NOT NULL AUTO_INCREMENT,
-       brand varchar(255) NOT NULL,
-       model varchar(255) NOT NULL,
-       package varchar(255) NOT NULL,
-       versioncode int(10) NOT NULL,
-       total int(10) NOT NULL,
-       vid int(10) NOT NULL,
-       vtitle char(50) NOT NULL,
-       version char(20) NOT NULL,
-       tid int(10) DEFAULT NULL,
-       prop int(10) DEFAULT NULL,
-       form int(10) DEFAULT NULL,
+       id INT(10) NOT NULL AUTO_INCREMENT,
+       brand VARCHAR(255) NOT NULL,
+       model VARCHAR(255) NOT NULL,
+       package VARCHAR(255) NOT NULL,
+       versioncode INT(10) NOT NULL,
+       total INT(10) NOT NULL,
+       vid INT(10) NOT NULL,
+       vtitle CHAR(50) NOT NULL,
+       version CHAR(20) NOT NULL,
+       tid INT(10) DEFAULT NULL,
+       prop INT(10) DEFAULT NULL,
+       form INT(10) DEFAULT NULL,
+       lang INT(10) NOT NULL DEFAULT '0',
        PRIMARY KEY (id),
        KEY index_total (total),
        KEY index_package (package),
@@ -180,8 +181,10 @@ mysql -h10.1.1.16  -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
        KEY index_model (model),
        KEY index_vid (vid),
        KEY index_prop (prop),
-       KEY index_tid (tid)
-     ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+       KEY index_tid (tid),
+       KEY index_form (form),
+       KEY index_lang (lang)
+     ) ENGINE=MYISAM  DEFAULT CHARSET=utf8;
     
     
     INSERT INTO sdk_app_stat_copy
@@ -193,10 +196,11 @@ mysql -h10.1.1.16  -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
         total, 
         vid, 
         vtitle,
-        version,
+        VERSION,
         tid,
         prop,
-        form
+        form,
+        lang
         )
     SELECT  
         s.brand, 
@@ -209,13 +213,68 @@ mysql -h10.1.1.16  -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
         v.version,
         v.tid,
         v.prop,
-        v.form
+        v.form,
+        v.lang
     FROM (mzw_game_v v, sdk_app_stat s)
     WHERE  
         s.package=v.package AND 
         v.tid!=27 AND
-        s.versioncode = v.versioncode ; 
+        s.versioncode = v.versioncode ;
 
+
+    DROP TABLE IF EXISTS sdk_app_stat_package;
+    CREATE TABLE sdk_app_stat_package (
+        id INT(10) NOT NULL AUTO_INCREMENT,
+        model VARCHAR(255) NOT NULL,
+        vid INT(10) NOT NULL,
+        package VARCHAR(255) NOT NULL,
+        total INT(10) NOT NULL,
+        tid INT(10) DEFAULT NULL,
+        prop INT(10) DEFAULT NULL,
+        form INT(10) DEFAULT NULL,
+        lang INT(10) NOT NULL DEFAULT '0',
+        parentid TINYINT(4) NOT NULL DEFAULT '0',
+        PRIMARY KEY (id),
+        KEY index_model (model),
+        KEY index_vid (vid),
+        KEY index_package (package),
+        KEY index_total (total),
+        KEY index_prop (prop),
+        KEY index_tid (tid),
+        KEY index_form (form),
+        KEY index_lang (lang),
+        KEY index_parentid (parentid)
+     ) ENGINE=MYISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+    
+    
+    INSERT INTO sdk_app_stat_package
+            (
+            model,
+            vid,
+            package,
+            total,
+            tid,
+            prop,
+            form,
+            lang,
+            parentid
+             )
+    SELECT
+        c.model,
+        c.vid,
+        c.package,
+        SUM(c.total) AS total,
+        c.tid,
+        c.prop,
+        c.form,
+        c.lang,
+        t.parentid
+      
+    FROM sdk_app_stat_copy c LEFT JOIN mzw_game_type t ON c.tid=t.tid
+    GROUP BY model,package
+    ORDER BY model,total desc
+        
+    
     
 EOF
 

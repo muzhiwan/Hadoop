@@ -343,7 +343,7 @@ sudo -u hdfs hive -e "
         select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
             EVENT_ID,PACKAGE_NAME as package,count(*) as total 
         from StandSDK100002 
-        where SERVER_TIME REGEXP  '^\\d+$' and CLIENT_TIME REGEXP  '^\\d+$' 
+        where SERVER_TIME >0 and CLIENT_TIME >0 and PACKAGE_NAME is not null
         group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,EVENT_ID,PACKAGE_NAME;
     
     
@@ -352,7 +352,7 @@ sudo -u hdfs hive -e "
         select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
             EVENT_ID,PACKAGE_NAME as package,count(*) as total 
         from StandSDK100003 
-        where SERVER_TIME REGEXP  '^\\d+$' and CLIENT_TIME REGEXP  '^\\d+$' 
+        where SERVER_TIME >0 and CLIENT_TIME >0  and PACKAGE_NAME is not null
         group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,EVENT_ID,PACKAGE_NAME;
     
     
@@ -361,7 +361,7 @@ sudo -u hdfs hive -e "
         select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
             EVENT_ID,PACKAGE_NAME as package,count(*) as total 
         from StandSDK100004 
-        where SERVER_TIME REGEXP  '^\\d+$' and CLIENT_TIME REGEXP  '^\\d+$' 
+        where SERVER_TIME >0 and CLIENT_TIME >0  and PACKAGE_NAME is not null
         group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,EVENT_ID,PACKAGE_NAME;
     
     
@@ -370,7 +370,7 @@ sudo -u hdfs hive -e "
         select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
             EVENT_ID,PACKAGE_NAME as package,count(*) as total 
         from StandSDK100005 
-        where SERVER_TIME REGEXP  '^\\d+$' and CLIENT_TIME REGEXP  '^\\d+$' 
+        where SERVER_TIME >0 and CLIENT_TIME >0  and PACKAGE_NAME is not null
         group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,EVENT_ID,PACKAGE_NAME;
     
     
@@ -379,7 +379,7 @@ sudo -u hdfs hive -e "
         select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
             EVENT_ID,PACKAGE_NAME as package,count(*) as total 
         from StandSDK100006 
-        where SERVER_TIME REGEXP  '^\\d+$' and CLIENT_TIME REGEXP  '^\\d+$' 
+        where SERVER_TIME >0 and CLIENT_TIME >0  and PACKAGE_NAME is not null
         group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,EVENT_ID,PACKAGE_NAME;
     
     drop    table standsdk100007_day_stat ;
@@ -387,27 +387,33 @@ sudo -u hdfs hive -e "
         select case when CLIENT_TIME>SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end as day,
             EVENT_ID,PACKAGE_NAME as package,count(*) as total 
         from StandSDK100007 
-        where SERVER_TIME REGEXP  '^\\d+$' and CLIENT_TIME REGEXP  '^\\d+$' 
+        where SERVER_TIME >0 and CLIENT_TIME >0  and PACKAGE_NAME is not null
         group by case when CLIENT_TIME > SERVER_TIME*1000 or SERVER_TIME>(CLIENT_TIME/1000)+864000 then from_unixtime(SERVER_TIME,'yyyy-MM-dd') else from_unixtime(floor(CLIENT_TIME/1000),'yyyy-MM-dd') end,EVENT_ID,PACKAGE_NAME;
     
     drop    table sdk_mobile_fps;
     create  table sdk_mobile_fps as
-        select package_name as package,CELL_PHONE_MODEL as model,sum(fps) as totla,count(*) as count,sum(fps)/count(*) as avg
+        select package_name as package,CELL_PHONE_MODEL as model,sum(fps) as fps_total,count(*) as fps_count,sum(fps)/count(*) as fps_avg
         from StandSDK100008 
+        where package_name is not null and length(package_name)>10 and fps >0  and CLIENT_TIME >0 
         group by PACKAGE_NAME,CELL_PHONE_MODEL;
-    
-    
-    
-     
-    
-    
-    
     
 "
 
 
  mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk <<EOF
 
+    DROP TABLE IF EXISTS sdk_mobile_fps;
+    CREATE TABLE sdk_mobile_fps (
+        package varchar(255) NOT NULL,
+        model varchar(255) NOT NULL,
+        fps_total int(10) NOT NULL,
+        fps_count int(10) NOT NULL,
+        fps_avg float NOT NULL,
+        KEY index_package (package),
+        KEY index_avg (fps_avg),
+        KEY index_model (model)
+    );
+    
     DROP TABLE IF EXISTS standsdk100002_day_stat;
     CREATE TABLE standsdk100002_day_stat (
         day varchar(255) NOT NULL,
@@ -466,6 +472,7 @@ sudo -u hdfs hive -e "
  
 EOF
  
+ sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table sdk_mobile_fps --export-dir /user/hive/warehouse/sdk_mobile_fps --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
  sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table standsdk100002_day_stat --export-dir /user/hive/warehouse/standsdk100002_day_stat --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
  sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table standsdk100003_day_stat --export-dir /user/hive/warehouse/standsdk100003_day_stat --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
  sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table standsdk100004_day_stat --export-dir /user/hive/warehouse/standsdk100004_day_stat --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
@@ -474,6 +481,13 @@ EOF
  sudo -u hdfs  sqoop export --connect jdbc:mysql://10.1.1.16:3306/stat_sdk --username statsdkuser --password statsdkuser2111579711 --table standsdk100007_day_stat --export-dir /user/hive/warehouse/standsdk100007_day_stat --input-fields-terminated-by '\001' --input-null-string "\\\\N" --input-null-non-string "\\\\N"
 
 
+ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  sdk_mobile_fps  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  standsdk100002_day_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  standsdk100003_day_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  standsdk100004_day_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  standsdk100005_day_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  standsdk100006_day_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
+ mysql -h10.1.1.16 -ustatsdkuser -pstatsdkuser2111579711 -D stat_sdk -e "ALTER TABLE  standsdk100007_day_stat  ADD id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY   FIRST ;"
  
  
  
